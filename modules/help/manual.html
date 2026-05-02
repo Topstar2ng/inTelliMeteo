@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliMeteo | Manual</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/favicons/favicon-16x16.png">
+    <link rel="manifest" href="../../assets/favicons/site.webmanifest">
+    <style>
+        body { background-color: #f8f9fa; }
+        .logo-img { width: 30px; height: 30px; margin-right: 10px; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+         @media (max-width: 576px) {
+            .container { padding: 15px; }
+        }
+
+</style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="../../index.php">
+            <img src="../../assets/images/intellimeteo_icon.png" class="logo-img"> 
+            IntelliMeteo <span class="d-none d-md-inline">: A Weather & Meteo Analytics Portal</span>
+        </a>        
+    </div>
+</nav>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-warning"><i class="bi bi-question-circle"></i> User Guide</h2>
+        <a href="../../index.php" class="btn btn-primary btn-sm"><i class="bi bi-house-heart"></i> Dashboard</a>
+    </div>
+
+    <h2 class="fw-bold mb-4"><i class="bi bi-book me-2"></i> IntelliMeteo User Manual</h2>
+    
+    <div class="row g-4">
+        <!-- Section: Dashboard -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <h5 class="text-primary"><i class="bi bi-speedometer2"></i> 1. Dashboard Navigation</h5>
+                <p class="small text-muted">The main dashboard displays 30-minute interval logs for your Home Station. Use the <strong>Search Bar</strong> in the navbar to switch between Nigerian cities.</p>
+            </div>
+        </div>
+
+        <!-- Section: Computations -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <h5 class="text-danger"><i class="bi bi-calculator"></i> 2. Meteorological Computations</h5>
+                <ul class="small">
+                    <li><strong>Psychrometric:</strong> Input Dry and Wet bulb temps from manual stations to get RH and Vapor Pressure.</li>
+                    <li><strong>Pressure:</strong> Convert QNH to QFE or Inches of Mercury (inHg) for aviation altimetry.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section: AgroMeteo -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <h5 class="text-success"><i class="bi bi-tree"></i> 3. AgroMeteo Insights</h5>
+                <p class="small">Access historical weather data and perform agricultural-specific analyses to optimize farming practices.</p>
+            </div>
+        </div>
+
+        <!-- Section: TAF & Forecast -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <h5 class="text-warning"><i class="bi bi-megaphone"></i> 4. Forecasts (TAF) & Warnings</h5>
+                <p class="small">Our TAF generator uses current trends to build a Terminal Aerodrome Forecast. Use the <strong>"Plain Language Decoder"</strong> below the code block for a human-readable summary.</p>
+            </div>
+        </div>
+
+        <!-- Section: Personalization -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <h5 class="text-success"><i class="bi bi-gear"></i> 5. Managing Settings</h5>
+                <p class="small">Access the <strong>Settings Gear</strong> to save your Home Station and unit preferences (Metric vs. Imperial). These settings persist across your account.</p>
+            </div>
+        </div>
+
+        <!-- Section: Meteolytics -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <h5 class="text-success"><i class="bi bi-gear"></i> 6. Meteolytics</h5>
+                <p class="small">Explore advanced meteorological analyses and visualizations to gain deeper insights into weather patterns and climate trends.</p>
+            </div>
+        </div>
+
+        <!-- Section: Competency Assessment -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <h5 class="text-info"><i class="bi bi-award"></i> 7. Competency Assessment</h5>
+                <p class="small">Test your knowledge of meteorological concepts and applications with our interactive quizzes and assessments.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer bg-dark text-light mt-4" style="position: sticky; bottom: 0;">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center py-3">
+            <div class="small mb-0">&copy;  IntelliMeteo. <span class="d-none d-md-inline">All rights reserved.</span></div>
+            
+            <span class="text-end"><a href="../../legal/index.php" class="text-warning"><i class="bi bi-box-fill"></i> Terms</a></span>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
