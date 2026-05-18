@@ -1,3 +1,6 @@
 .env
 node_modules/
 vendor/
+
+# Ignore all log files inside logs folder
+*-old.php
