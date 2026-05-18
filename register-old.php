@@ -1,20 +1,18 @@
 <?php
+
 require_once 'includes/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
-    $stmt->execute([$_POST['email']]);
-    $user = $stmt->fetch();
+    $name = $_POST['full_name'];
+    $email = $_POST['email'];
+    $pass = password_hash($_POST['password'], PASSWORD_DEFAULT); // Secure hashing
 
-    if ($user && password_verify($_POST['password'], $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['full_name'] = $user['full_name'];
-        $_SESSION['role'] = $user['role'];
-        
-        header("Location: index.php");
-        exit();
-    } else {
-        $error = "Invalid email or password.";
+    try {
+        $stmt = $pdo->prepare("INSERT INTO users (full_name, email, password) VALUES (?, ?, ?)");
+        $stmt->execute([$name, $email, $pass]);
+        header("Location: login.php?msg=registered");
+    } catch (PDOException $e) {
+        $error = "Registration failed. Email might already exist.";
     }
 }
 ?>
@@ -37,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .search-btn { border-radius: 0 5px 5px 0; }
         .search-input { border-radius: 5px 0 0 5px; }
         .logo-img { width: 30px; height: 30px; margin-right: 10px; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
-        .page-img { width: 150px; height: 100px; margin-bottom: 10px; border-radius: 50%; box-shadow: 0 0 25px rgba(0,0,0,0.2); }
          @media (max-width: 576px) {
             .hero-card { text-align: center; }
             .hero-card .row { flex-direction: column; }
@@ -63,19 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </a>        
     </div>
 </nav>
-<!-- HTML for Login Form -->
+<!-- HTML for Register Form using Bootstrap -->
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-4 card p-4 shadow-sm border-0">
-            <div class="text-center mb-4">
-                <img src="assets/images/intellimeteo_icon.png" class="page-img">
-                <h4 class="mt-2">IntelliMeteo Login</h4>
-            </div>
-            <?php if(isset($error)) echo "<div class='alert alert-danger small'>$error</div>"; ?>
+        <div class="col-md-4 card p-4 shadow-sm">
+            <h4 class="text-center mb-4">Create Account</h4>
             <form method="POST">
                 <div class="mb-3">
                     <label class="small fw-bold"><i class="bi bi-envelope"></i> Email</label>
-                    <input type="email" name="email" class="form-control" required>
+                    <input type="email" name="email" class="form-control mb-3" placeholder="Email Address" required>
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold"><i class="bi bi-person"></i> Full Name</label>
+                    <input type="text" name="full_name" class="form-control mb-3" placeholder="Full Name" required>
                 </div>
                 <div class="mb-3">
                     <!-- Add a password strength indicator here and also reveal password option -->
@@ -84,18 +81,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <input type="password" name="password" class="form-control" placeholder="Password" required>
                         <button class="btn btn-outline-secondary" type="button" id="reveal-password"><i class="bi bi-eye p-icon"></i></button>
                     </div>
+                    <div id="password-strength" class="small mt-1"></div>
 
                 </div>
-
-                <button type="submit" class="btn btn-dark w-100">Enter Portal</button>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="terms" required>
+                    <label class="form-check-label small" for="terms">
+                        I agree to the <a href="legal/index.php" target="_blank">Terms of Reference</a>.
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Register</button>
             </form>
-            <p class="mt-3 small text-center">Don't have an account? <a href="register.php">Register</a> or continue as a  <a href="index.php">Guest</a>.</p>
+            <p class="mt-3 small text-center">Already have an account? <a href="login.php">Login</a>  or continue as a  <a href="index.php">Guest</a>.</p>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Add JavaScript for password strength indicator and reveal password functionality
+
+    const passwordInput = document.querySelector('input[name="password"]');
+    passwordInput.addEventListener('input', () => {
+        const strengthText = document.getElementById('password-strength');
+        const value = passwordInput.value;
+        let strength = 'Weak';
+        if (value.length > 8 && /[A-Z]/.test(value) && /[0-9]/.test(value) && /[\W]/.test(value)) {
+            strength = 'Strong';
+        } else if (value.length > 6) {
+            strength = 'Medium';
+        }
+        if (strengthText) {
+            strengthText.textContent = `Password Strength: ${strength}`;
+            strengthText.className = `small mt-1 ${strength === 'Strong' ? 'text-success' : strength === 'Medium' ? 'text-warning' : 'text-danger'}`;
+        }
+
+    });
     // Add a checkbox to reveal password and toggle the input type between 'password' and 'text'
     const revealPasswordCheckbox = document.getElementById('reveal-password');
     const passwordInputField = document.querySelector('input[name="password"]');
@@ -109,5 +130,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     });
 </script>
-</body>
-</html>
+<?php include 'includes/footer.php'; ?>

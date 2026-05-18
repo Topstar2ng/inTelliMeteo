@@ -19,82 +19,59 @@ if (isset($weather['error'])) {
     $weather = getWeatherData("Kano"); // Fallback data
 }
 
+// Define local background based on weather condition
+$weatherMain = strtolower($weather['weather'][0]['main']); 
+$weatherDescription = strtolower($weather['weather'][0]['description']); 
+$bgPath = "";
+
+switch ($weatherMain) {
+    case 'thunderstorm':
+        $bgPath = "assets/images/weather/thunderstorm.jpg";
+        break;
+    case 'clouds':
+        switch ($weatherDescription) {
+            case 'few clouds':
+                $bgPath = "assets/images/weather/cloud-few.jpg";
+                break;
+            case 'scattered clouds':
+                $bgPath = "assets/images/weather/cloud-sct.jpg";
+                break;
+            case 'broken clouds':
+                $bgPath = "assets/images/weather/cloud-bkn.jpg";
+                break;
+            default:
+                $bgPath = "assets/images/weather/clear.jpg";
+                break;
+        }
+        break;
+    case 'fog':
+    case 'mist':
+        $bgPath = "assets/images/weather/fog.jpg";
+        break;
+    case 'rain':
+    case 'drizzle':
+        $bgPath = "assets/images/weather/rain.jpg";
+        break;
+    case 'dust':
+    case 'sand':
+        $bgPath = "assets/images/weather/dust.jpg";
+        break;
+    case 'haze':
+        $bgPath = "assets/images/weather/haze.jpg";
+        break;
+    case 'clear':
+    default:
+        $bgPath = "assets/images/weather/clear.jpg";
+        break;
+}
+
+// Wrap it in the gradient for readability
+$bgStyle = "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('$bgPath')";
 
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IntelliMeteo | Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicons/favicon-16x16.png">
-    <link rel="manifest" href="assets/favicons/site.webmanifest">
-    <style>
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .hero-card { background: linear-gradient(45deg, #1e3c72, #2a5298); color: white; border-radius: 15px; }
-        .search-btn { border-radius: 0 5px 5px 0; }
-        .search-input { border-radius: 5px 0 0 5px; }
-        .logo-img { width: 30px; height: 30px; margin-right: 10px; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
-         @media (max-width: 576px) {
-            .hero-card { text-align: center; }
-            .hero-card .row { flex-direction: column; }
-            .hero-card .col-md-6 { text-align: center; }
-        }
 
-    /* Subtle rotation effect for the gear icon on hover */
-    .hover-rotate:hover i {
-        display: inline-block;
-        transform: rotate(45deg);
-        transition: transform 0.3s ease;
-        color: #ffc107; /* Warning yellow color to match your theme */
-    }
-</style>
-</head>
-<body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="index.php">
-            <img src="assets/images/intellimeteo_icon.png" class="logo-img"> 
-            IntelliMeteo <span class="d-none d-md-inline">: A Weather & Meteo Analytics Portal</span>
-        </a>
-        
-        <div class="d-flex align-items-center">
-            <!-- Search Form (Always Visible) -->
-            <form class="d-flex me-3" action="index.php" method="GET">
-                <input class="form-control search-input form-control-sm" type="search" name="city" placeholder="City..." aria-label="Search" required>
-                <button class="btn btn-primary btn-sm search-btn" type="submit" title="search..."><i class="bi bi-search-heart"></i></button>
-            </form>
-
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <!-- USER VIEW: Logged In -->
-                <span class="text-light me-3 small d-none d-lg-inline">
-                    Hi, <strong><?php echo explode(' ', $_SESSION['full_name'])[1]; ?></strong>
-                </span>
-                
-                <!-- Logout Button -->
-                <a href="logout.php" class="btn btn-outline-danger btn-sm me-2" title="Logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
-
-                <!-- Settings Icon -->
-                <a href="modules/settings/index.php" class="text-white fs-5 lh-1 p-1 hover-rotate" title="Settings">
-                    <i class="bi bi-gear-fill"></i>
-                </a>
-            <?php else: ?>
-                <!-- GUEST VIEW: Not Logged In -->
-                <a href="login.php" class="btn btn-outline-light btn-sm me-2"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-                <a href="register.php" class="btn btn-primary btn-sm"><i class="bi bi-person-add"></i> Register</a>
-            <?php endif; ?>
-        </div>
-    </div>
-</nav>
-
+<?php include 'includes/header.php'; ?>
 
 
 <div class="container mt-4">
@@ -111,11 +88,26 @@ if (isset($weather['error'])) {
     <!-- Main Display -->
     <div class="row mb-5">
         <div class="col-md-12">
-            <div class="card hero-card shadow-lg p-5">
+            <div class="card hero-card shadow-lg p-5" 
+     style="background: <?php echo $bgStyle; ?>; background-size: cover; background-position: center; transition: background 0.5s ease;">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <h1 class="display-4 fw-bold"><?php echo $weather['name']; ?></h1>
-                        <p class="lead text-capitalize"><?php echo $weather['weather'][0]['description']; ?></p>
+                        <h1 class="display-4 fw-bold"><?php echo $weather['name']; ?>, <?php echo $weather['sys']['country']; ?></h1>
+                        <p class="lead text-capitalize">
+                            <?php 
+                            $weatherDescription = $weather['weather'][0]['description'];
+                            if(strtolower($weatherDescription) == 'overcast clouds'){
+                                $weatherDescription = "Medium Clouds";
+                            }
+                            echo $weatherDescription;
+                            ?>
+                        <?php
+                            //include weather icon
+                            $iconCode = $weather['weather'][0]['icon'];
+                            $iconUrl = "https://openweathermap.org/img/wn/" . $iconCode . "@2x.png";
+                        ?>
+                        <img src="<?php echo $iconUrl; ?>" alt="Weather Icon" class="img-fluid mb-2">
+                        </p>
                         <hr class="bg-white">
                         <div class="d-flex gap-4">
                             <div>
@@ -125,6 +117,10 @@ if (isset($weather['error'])) {
                             <div>
                                 <small class="d-block text-light"><i class="bi bi-wind"></i> Wind Speed</small>
                                 <strong><?php echo $weather['wind']['speed']; ?> m/s</strong>
+                            </div>
+                            <div>
+                                <small class="d-block text-light"><i class="bi bi-map"></i> Location</small>
+                                <strong><?php echo $weather['coord']['lat']; ?>, <?php echo $weather['coord']['lon']; ?></strong>
                             </div>
                         </div>
                     </div>
@@ -151,13 +147,13 @@ if (isset($weather['error'])) {
         </div>
         <div class="col-md-4">
             <div class="card border-0 shadow-sm p-4 h-100">
-                <div class="mb-2"><i class="bi bi-airplane text-dark fs-1"></i></div>
+                <div class="mb-2"><i class="bi bi-airplane text-warning fs-1"></i></div>
                 <h4>AeroMeteo</h4>
                 <p class="text-muted">Aviation reports for local airports.</p>
                 <!-- Change the button link to include the current city -->
                     <?php if(isset($_SESSION['user_id'])): ?>
                         <a href="modules/aerometeo/index.php?city=<?php echo urlencode($currentCity); ?>" 
-                            class="btn btn-outline-dark btn-sm mt-auto">
+                            class="btn btn-outline-warning btn-sm mt-auto">
                             <i class="bi bi-airplane me-1"></i> Open Tools
                         </a>
                     <?php else: ?>
@@ -238,4 +234,4 @@ if (isset($weather['error'])) {
     </div>
 </div>
 
-<?php include 'footer.php'; ?>
+<?php include 'includes/footer.php'; ?>

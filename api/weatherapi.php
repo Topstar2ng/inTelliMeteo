@@ -34,7 +34,7 @@ function getWeatherData($city = "Kano") {
 /**
  * Fetch 5-Day / 3-Hour Forecast
  */
-function getWeatherForecast($city = "Lagos") {
+function getWeatherForecast($city = "Kano") {
     $apiKey = WEATHER_API_KEY;
     $city = urlencode(trim($city));
     // Note the endpoint change to /forecast

@@ -5,15 +5,10 @@ require_once '../../includes/auth_check.php';
 
 $userId = $_SESSION['user_id'];
 $engine = new AssessmentEngine($pdo); // Instantiates instance utilizing system global PDO context
+$questionBank = AssessmentEngine::getQuestionBank();
 
 $evaluationResult = null;
 $activeTab = 'test-panel';
-
-// Determine which specific module the professional wishes to test against (Default: Aviation)
-$selectedCategory = $_GET['category'] ?? 'aviation';
-if (!in_array($selectedCategory, ['aviation', 'general', 'agro'])) {
-    $selectedCategory = 'aviation';
-}
 
 // Process Exam form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_exam') {
@@ -24,8 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $activeTab = 'history-panel'; // Route view to analytics to show performance updates instantly
 }
 
-// Load 5 randomized items exclusively for the chosen assessment environment
-$questions = $engine->getRandomQuestions($selectedCategory, 5);
 $history = $engine->getUserHistory($userId);
 ?>
 <?php include '../../includes/header.php'; ?>
@@ -52,21 +45,17 @@ $history = $engine->getUserHistory($userId);
     .option-label {
         cursor: pointer;
         display: block;
-        padding: 12px 16px;
+        padding: 10px 14px;
         background: #111420;
         border: 1px solid #1e2538;
         border-radius: 6px;
         margin-bottom: 8px;
         transition: all 0.2s ease;
     }
-    .option-label:hover {
-        background: #161b2c;
-        border-color: #2d3a54;
-    }
     .form-check-input:checked + .option-label {
-        background: rgba(59, 130, 246, 0.15) !important;
-        border-color: #3b82f6 !important;
-        color: #60a5fa !important;
+        background: rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
+        color: #60a5fa;
     }
     .nav-tabs .nav-link {
         color: #94a3b8;
@@ -85,46 +74,23 @@ $history = $engine->getUserHistory($userId);
     .history-row.fail-gradient {
         border-left-color: #ef4444;
     }
-    .category-btn {
-        background: #151b2d;
-        border: 1px solid #222d46;
-        color: #94a3b8;
-    }
-    .category-btn.active {
-        background: #2563eb !important;
-        border-color: #3b82f6 !important;
-        color: #ffffff !important;
-    }
 </style>
 
 <div class="container mt-5">
-    <!-- Section Header Toolbar -->
     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary" style="border-color: rgba(255,255,255,0.08) !important;">
         <div>
             <h2 class="fw-bold text-info mb-0 d-flex align-items-center">
                 <i class="bi bi-shield-check me-2"></i> Professional Competency Assessment
             </h2>
-            <small class="text-dark">Validate precision knowledge frameworks against regulatory ICAO & WMO guidelines</small>
+            <small class="text-muted">Validate precision knowledge frameworks against regulatory ICAO & WMO guidelines</small>
         </div>
         <div class="btn-group shadow-sm" role="group">
             <a href="../../index.php" class="btn btn-outline-secondary btn-sm" title="Dashboard"><i class="bi bi-house-heart"></i></a>
             <a href="../aerometeo/index.php" class="btn btn-outline-secondary btn-sm" title="AeroMeteo"><i class="bi bi-airplane-fill"></i></a>
             <a href="../agrometeo/index.php" class="btn btn-outline-secondary btn-sm" title="AgroMeteo"><i class="bi bi-tree-fill"></i></a>
-            <?php if ($isAdmin): ?>
-                <a href="admin_questions.php" class="btn btn-danger btn-sm" title="Admin Panel"><i class="bi bi-tools"></i></a>
-            <?php endif; ?>
         </div>
     </div>
 
-    <div>
-        <div class="alert alert-info d-flex align-items-center shadow-sm mb-4" role="alert">
-            <i class="bi bi-info-circle-fill me-2"></i>
-            <div>
-                This module serves as a continuous professional development tool, allowing you to test your knowledge and track your performance history across various meteorological domains. Select a testing domain, complete the examination, and receive instant feedback on your performance metrics.
-            </div>
-        </div>
-    </div>
-    <!-- Interface Controller Tabs -->
     <ul class="nav nav-tabs border-secondary mb-4" id="assessmentTabs" role="tablist">
         <li class="nav-item">
             <button class="nav-link fw-bold text-uppercase small tracking-wide <?php echo ($activeTab === 'test-panel') ? 'active' : ''; ?>" 
@@ -142,54 +108,41 @@ $history = $engine->getUserHistory($userId);
 
     <div class="tab-content" id="assessmentTabsContent">
         
-        <!-- Tab 1: Live Exam Terminal Panel -->
         <div class="tab-pane fade <?php echo ($activeTab === 'test-panel') ? 'show active' : ''; ?>" id="test-panel" role="tabpanel">
-            
-            <!-- CBT Subject Domain Navigation Bar -->
-            <div class="mb-4">
-                <span class="text-uppercase small tracking-wider text-primary d-block mb-2 font-monospace">Select Testing Domain:</span>
-                <div class="btn-group text-white" role="group">
-                    <a href="?category=aviation" class="btn category-btn btn-sm px-3 <?php echo $selectedCategory === 'aviation' ? 'active' : ''; ?>">Aviation Systems (ICAO)</a>
-                    <a href="?category=general" class="btn category-btn btn-sm px-3 <?php echo $selectedCategory === 'general' ? 'active' : ''; ?>">General Meteorology</a>
-                    <a href="?category=agro" class="btn category-btn btn-sm px-3 <?php echo $selectedCategory === 'agro' ? 'active' : ''; ?>">AgroMeteo Engine</a>
-                </div>
-            </div>
-
             <div class="row g-4">
-                <div class="col-12">
-                    <div class="card assessment-card p-4 shadow-lg">
-                        <div class="d-flex align-items-center justify-content-between border-bottom border-secondary pb-3 mb-4" style="border-color: rgba(255,255,255,0.05) !important;">
-                            <h4 class="text-white fw-bold mb-0 text-capitalize">
-                                <i class="bi bi-bookmark-star text-warning me-2"></i><?php echo htmlspecialchars($selectedCategory); ?> Module Focus
-                            </h4>
-                            <span class="badge bg-dark border border-secondary text-light px-3 py-2 font-monospace">
-                                <?php echo count($questions); ?> CBT Questions Loaded
-                            </span>
-                        </div>
+                <?php foreach ($questionBank as $catKey => $quizGroup): ?>
+                    <div class="col-12 mb-4">
+                        <div class="card assessment-card p-4 shadow-lg">
+                            <div class="d-flex align-items-center justify-content-between border-bottom border-secondary pb-3 mb-4" style="border-color: rgba(255,255,255,0.05) !important;">
+                                <h4 class="text-white fw-bold mb-0 text-capitalize">
+                                    <i class="bi bi-bookmark-star text-warning me-2"></i><?php echo $catKey; ?> Meteorology Focus Module
+                                </h4>
+                                <span class="badge bg-dark border border-secondary text-light px-3 py-2 font-monospace">
+                                    <?php echo count($quizGroup); ?> Validation Questions
+                                </span>
+                            </div>
 
-                        <?php if (!empty($questions)): ?>
                             <form action="" method="POST">
                                 <input type="hidden" name="action" value="submit_exam">
-                                <input type="hidden" name="category" value="<?php echo htmlspecialchars($selectedCategory); ?>">
+                                <input type="hidden" name="category" value="<?php echo htmlspecialchars($catKey); ?>">
 
-                                <?php foreach ($questions as $index => $q): ?>
+                                <?php foreach ($quizGroup as $index => $q): ?>
                                     <div class="question-box p-4 mb-4">
-                                        <h6 class="text-white fw-semibold mb-3">
+                                        <h5 class="text-white fw-semibold mb-3">
                                             <span class="text-info font-monospace me-2">Q<?php echo ($index + 1); ?>.</span>
-                                            <?php echo htmlspecialchars($q['question_text']); ?>
-                                        </h6>
-                                        
+                                            <?php echo htmlspecialchars($q['question']); ?>
+                                        </h5>
+
                                         <div class="options-container ps-2">
-                                            <?php foreach (['A' => 'option_a', 'B' => 'option_b', 'C' => 'option_c', 'D' => 'option_d'] as $key => $columnKey): ?>
-                                                <div class="form-check position-relative p-0 m-0 text-light mb-2">
-                                                    <!-- Invisible radio overlaying the custom engineered block label -->
+                                            <?php foreach ($q['options'] as $key => $optionValue): ?>
+                                                <div class="form-check position-relative p-0 m-0 text-light">
                                                     <input class="form-check-input d-none" type="radio" 
                                                            name="answers[<?php echo $q['id']; ?>]" 
                                                            id="opt_<?php echo $q['id'] . '_' . $key; ?>" 
                                                            value="<?php echo $key; ?>" required>
                                                     <label class="option-label" for="opt_<?php echo $q['id'] . '_' . $key; ?>">
                                                         <span class="fw-bold text-warning me-2"><?php echo $key; ?>.</span> 
-                                                        <?php echo htmlspecialchars($q[$columnKey]); ?>
+                                                        <?php echo htmlspecialchars($optionValue); ?>
                                                     </label>
                                                 </div>
                                             <?php endforeach; ?>
@@ -201,28 +154,22 @@ $history = $engine->getUserHistory($userId);
                                     <i class="bi bi-cloud-arrow-up-fill me-2"></i>Submit Exam for Verification
                                 </button>
                             </form>
-                        <?php else: ?>
-                            <div class="text-center py-5 text-warning">
-                                <i class="bi bi-database-exclamation fs-2 d-block mb-2 text-warning"></i>
-                                No active testing criteria configured for this domain inside the admin dashboard yet.
-                            </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
-                </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
-        <!-- Tab 2: Performance History Log -->
         <div class="tab-pane fade <?php echo ($activeTab === 'history-panel') ? 'show active' : ''; ?>" id="history-panel" role="tabpanel">
             
             <?php if ($evaluationResult): ?>
                 <div class="alert assessment-card border-0 p-4 shadow-lg mb-4 text-center">
-                    <span class="text-uppercase small tracking-widest text-warning d-block mb-1">Grading System Acknowledgment</span>
+                    <span class="text-uppercase small tracking-widest text-muted d-block mb-1">Grading System Acknowledgment</span>
                     <h3 class="fw-bold text-white mb-2">Evaluation Completed!</h3>
                     <div class="display-4 fw-bold text-<?php echo $evaluationResult['percentage'] >= 70 ? 'success' : 'warning'; ?> font-monospace my-3">
                         <?php echo $evaluationResult['percentage']; ?>%
                     </div>
-                    <p class="text-warning small mx-auto" style="max-width: 500px;">
+                    <p class="text-muted small mx-auto" style="max-width: 500px;">
                         You answered <strong class="text-white"><?php echo $evaluationResult['score']; ?></strong> correctly out of <strong class="text-white"><?php echo $evaluationResult['total']; ?></strong> variables. The data record matrix has been saved to your metrics history table.
                     </p>
                 </div>
@@ -232,7 +179,7 @@ $history = $engine->getUserHistory($userId);
                 <h5 class="text-white fw-bold mb-3 d-flex align-items-center">
                     <i class="bi bi-graph-up-arrow text-success me-2"></i>Historical Verification Logs
                 </h5>
-                <p class="text-warning small mb-4">Continuous logging of assessment metrics establishes proof of currency logs required across modern aviation operations profiles.</p>
+                <p class="text-muted small mb-4">Continuous logging of assessment metrics establishes proof of currency logs required across modern aviation operations profiles.</p>
 
                 <div class="d-flex flex-column gap-3">
                     <?php if (!empty($history)): ?>
@@ -241,7 +188,7 @@ $history = $engine->getUserHistory($userId);
                             <div class="p-3 rounded history-row <?php echo $isPassed ? '' : 'fail-gradient'; ?> d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                                 <div>
                                     <h6 class="text-white fw-semibold mb-1"><?php echo htmlspecialchars($row['category']); ?> Module</h6>
-                                    <small class="text-warning font-monospace">
+                                    <small class="text-muted font-monospace">
                                         <i class="bi bi-calendar3 me-1"></i><?php echo date('Y-m-d H:i UTC', strtotime($row['attempted_at'])); ?>
                                     </small>
                                 </div>
@@ -250,13 +197,13 @@ $history = $engine->getUserHistory($userId);
                                         <div class="text-light fw-bold mb-0 font-monospace" style="font-size: 1.1rem;">
                                             <?php echo $row['score_achieved']; ?> / <?php echo $row['total_questions']; ?>
                                         </div>
-                                        <small class="text-warning d-block small">Raw Score</small>
+                                        <small class="text-muted d-block small">Raw Score</small>
                                     </div>
                                     <div class="text-center" style="min-width: 75px;">
                                         <span class="badge rounded-pill font-monospace p-2 bg-dark border text-<?php echo $isPassed ? 'success border-success' : 'danger border-danger'; ?>" style="font-size: 0.9rem; width: 100%;">
                                             <?php echo $row['percentage']; ?>%
                                         </span>
-                                        <small class="text-warning d-block mt-1 style-status" style="font-size: 0.7rem; text-transform: uppercase;">
+                                        <small class="text-muted d-block mt-1 style-status" style="font-size: 0.7rem; text-transform: uppercase;">
                                             <?php echo $isPassed ? 'Passed' : 'Deficient'; ?>
                                         </small>
                                     </div>
@@ -264,7 +211,7 @@ $history = $engine->getUserHistory($userId);
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="text-center py-5 text-warning italic">
+                        <div class="text-center py-5 text-muted italic">
                             <i class="bi bi-folder-x fs-1 d-block mb-2 opacity-50"></i>
                             No logged examination indices located inside your account container profile.
                         </div>

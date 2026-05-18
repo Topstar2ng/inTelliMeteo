@@ -1,4 +1,5 @@
 # 🌦️ IntelliMeteo – Nigerian Weather & Analytics Platform
+- A production-ready weather intelligence platform built for real-world use in Nigeria
 
 ## 🚀 Overview
 IntelliMeteo is a comprehensive weather intelligence platform designed for both public users and meteorological professionals in Nigeria.
@@ -15,6 +16,9 @@ It combines real-time weather data with advanced analytics and domain-specific t
 - 🌱 AgroMeteo insights for agriculture  
 - 🧠 Professional assessment module  
 
+## 🧩 Standout Feature
+
+- Meteolytics — an analytics module designed for weather professionals, providing visualization and - validation tools beyond standard weather apps.
 ---
 
 ## 📸 Screenshots

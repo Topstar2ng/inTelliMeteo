@@ -7,131 +7,161 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: ../../index.php");
     exit();
 }
-//convert last city to word capitalized for better matching with ICAO map
+
+// Convert last city to word capitalized for better matching with ICAO map
 $city = ucfirst(strtolower($_SESSION['last_city'] ?? "Kano")); // Default to Kano if no city in session
 $forecastData = getWeatherForecast($city); // Get the 5-day/3-hour data
 $taf = TafGenerator::generate($city, $forecastData['list'] ?? []);
 ?>
+<?php include '../../includes/header.php'; ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AeroMeteo | Meteorological Intelligence</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/favicons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/favicons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/favicons/favicon-16x16.png">
-    <link rel="manifest" href="../../assets/favicons/site.webmanifest">
-    <style>
-        body { background-color: #121212; color: #e0e0e0; }
-        .metar-box { background: #1e1e1e; border-left: 5px solid #00ff00; font-family: 'Courier New', monospace; font-size: 1.2rem; }
-        .card { background: #1e1e1e; border: 1px solid #333; color: white; }
-        .text-neon { color: #00ff00; }
-        .logo-img { width: 30px; height: 30px; margin-right: 10px; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
-    </style>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="index.php">
-            <img src="../../assets/images/intellimeteo_icon.png" class="logo-img"> 
-            IntelliMeteo <span class="d-none d-md-inline">: A Weather & Meteo Analytics Portal</span>
-        </a>
-        
-        <div class="d-flex align-items-center">
-            <!-- Search Form (Always Visible) -->
-            <form class="d-flex me-3" action="index.php" method="GET">
-                <input class="form-control search-input form-control-sm" type="search" name="city" placeholder="City..." aria-label="Search" required>
-                <button class="btn btn-primary btn-sm search-btn" type="submit" title="search..."><i class="bi bi-search-heart"></i></button>
-            </form>
+<style>
+    body { 
+        background-color: #0f111a !important; 
+        color: #0449a4 !important; 
+    }
+    .taf-card {
+        background: #161925;
+        border: 1px solid #23293e;
+        border-radius: 12px;
+    }
+    .taf-header {
+        background: #1e2235;
+        border-bottom: 1px solid #23293e;
+        color: #ffc107; /* Consistent warning accent color */
+    }
+    .raw-taf-container {
+        background: #090b11;
+        border-left: 4px solid #ffc107;
+        border-radius: 6px;
+        position: relative;
+    }
+    .raw-taf-code {
+        font-family: 'Courier New', Courier, monospace;
+        letter-spacing: 1px;
+        line-height: 1.6;
+        color: #38bdf8 !important; /* Cleaner aviation blue/cyan look instead of harsh neon green */
+    }
+    .translation-item {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        transition: background 0.2s ease;
+    }
+    .translation-item:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+    .btn-action {
+        transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+        transform: translateY(-1px);
+    }
+</style>
 
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <!-- USER VIEW: Logged In -->
-                <span class="text-light me-3 small d-none d-lg-inline">
-                    Hi, <strong><?php echo explode(' ', $_SESSION['full_name'])[0]; ?></strong>
-                </span>
-                
-                <!-- Logout Button -->
-                <a href="../../logout.php" class="btn btn-outline-danger btn-sm me-2" title="Logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
-
-                <!-- Settings Icon -->
-                <a href="../../modules/settings/index.php" class="text-white fs-5 lh-1 p-1 hover-rotate" title="Settings">
-                    <i class="bi bi-gear-fill"></i>
-                </a>
-            <?php else: ?>
-                <!-- GUEST VIEW: Not Logged In -->
-                <a href="login.php" class="btn btn-outline-light btn-sm me-2"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-                <a href="register.php" class="btn btn-primary btn-sm"><i class="bi bi-person-add"></i> Register</a>
-            <?php endif; ?>
-        </div>
-    </div>
-</nav>
 <div class="container mt-5">
-    <div class="mb-4 text-end">
-        
-        <a href="../../index.php" class="btn btn-primary btn-sm"><i class="bi bi-house-heart"></i> Dashboard</a>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card border-0 shadow-sm overflow-hidden">
-                <div class="card-header bg-warning text-dark fw-bold p-3">
-                    <i class="bi bi- megaphone me-2"></i> Terminal Aerodrome Forecast (TAF)
-                </div>
-                <div class="card-body bg-dark text-success p-4">
-                    <h6 class="text-secondary small mb-3 text-uppercase">Generated Aviation Forecast:</h6>
-                    <code class="fs-4 d-block mb-3" style="letter-spacing: 2px; color: #00ff00;">
-                        <?php echo $taf; ?>
-                    </code>
-                    <p class="text-secondary x-small mb-0">
-                        <i class="bi bi-info-circle"></i> This TAF is still a 'work in progress' and may still be inaccurate, please use it as a guide only.
-                        <button class="btn btn-outline-secondary btn-sm" onclick="navigator.clipboard.writeText('<?php echo strip_tags($taf); ?>')" title="click to copy">
-                                <i class="bi bi-clipboard"></i>
-                            </button>
-                    </p>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="mb-0 fw-bold"><i class="bi bi-clouds me-2 text-primary"></i>Aviation Briefing</h4>
+            <small class="text-muted">Terminal Aerodrome Forecasts for <?php echo htmlspecialchars($city); ?></small>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="../../index.php" class="btn btn-primary btn-sm" title="dashboard"><i class="bi bi-house-heart"></i></a>
+            <a href="../meteolytics/index.php" class="btn btn-danger btn-sm" title="Meteolytics"><i class="bi bi-graph-up-arrow"></i></a>
+            <a href="../agrometeo/index.php" class="btn btn-success btn-sm" title="AgroMeteo"><i class="bi bi-tree-fill"></i></a>
+            <a href="../computations/index.php" class="btn btn-danger btn-sm" title="Computations"><i class="bi bi-calculator"></i></a>
+            <a href="../aerometeo/index.php" class="btn btn-warning btn-sm" title="AeroMet"><i class="bi bi-airplane-fill"></i></a>
         </div>
     </div>
 
-    <?php
-    // ... Previous PHP logic ...
-    require_once 'TafDecoder.php';
-    $decodedTaf = TafDecoder::decode($taf);
-    ?>
-
-    <!-- Under the <code> section in your existing index.php -->
-    <div class="mt-4 border-top border-secondary pt-3">
-        <h6 class="text-warning small fw-bold mb-3"><i class="bi bi-translate me-1"></i> Plain Language Translation</h6>
-        <ul class="list-group list-group-flush bg-transparent">
-            <?php foreach ($decodedTaf as $line): ?>
-                <li class="list-group-item bg-transparent text-light border-0 py-1 ps-0" style="font-size: 0.9rem;">
-                    <i class="bi bi-arrow-right-short text-warning"></i> <?php echo $line; ?>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </div>
-
-    <!-- Warnings Section -->
-    <div class="row mt-4">
+    <div class="row mb-4">
         <?php 
-        $temp = $forecastData['list'][0]['main']['temp'];
+        $temp = $forecastData['list'][0]['main']['temp'] ?? 0;
         if ($temp > 38): 
         ?>
         <div class="col-12">
-            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center">
-                <i class="bi bi-exclamation-triangle-fill fs-2 me-3"></i>
+            <div class="alert alert-danger bg-danger-subtle border-0 shadow-sm d-flex align-items-center mb-0 text-white" style="background-color: rgba(220, 53, 69, 0.2) !important;">
+                <i class="bi bi-exclamation-triangle-fill fs-3 me-3 text-danger"></i>
                 <div>
-                    <strong>Heat Advisory:</strong> Extreme temperatures forecasted. Ensure livestock hydration and avoid midday planting.
+                    <strong class="text-danger">Heat Advisory:</strong> Extreme temperatures forecasted (<?php echo round($temp); ?>°C). Ensure livestock hydration and avoid midday planting.
                 </div>
             </div>
         </div>
         <?php endif; ?>
     </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card taf-card border-0 shadow-lg overflow-hidden">
+                <div class="card-header taf-header p-3 d-flex justify-content-between align-items-center">
+                    <span class="fw-bold fs-5">
+                        <i class="bi bi-megaphone me-2"></i>Terminal Aerodrome Forecast (TAF)
+                    </span>
+                    <span class="badge bg-dark text-warning border border-secondary px-3 py-2 uppercase font-monospace">
+                        ICAO: <?php echo htmlspecialchars($city); ?>
+                    </span>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-muted small text-uppercase mb-0 tracking-wider">Raw Bulletin Data</h6>
+                        <button class="btn btn-sm btn-dark text-light border border-secondary btn-action" 
+                                onclick="navigator.clipboard.writeText('<?php echo addslashes(strip_tags($taf)); ?>')" 
+                                title="Copy raw TAF data">
+                            <i class="bi bi-clipboard me-1"></i> Copy Code
+                        </button>
+                    </div>
+
+                    <div class="raw-taf-container p-4 mb-4">
+                        <code class="fs-4 d-block raw-taf-code">
+                            <?php echo $taf; ?>
+                        </code>
+                    </div>
+
+                    <div class="d-flex align-items-center bg-dark p-3 rounded border border-secondary mb-4">
+                        <i class="bi bi-info-circle-fill text-info me-2 fs-5"></i>
+                        <span class="flex-grow-1 text-light">This automated TAF synthesis is under verification and experimental evaluation. Utilize context rules as an operational guide only.</span>
+                    </div>
+
+                    <?php
+                    require_once 'TafDecoder.php';
+                    $decodedTaf = TafDecoder::decode($taf);
+                    ?>
+
+                    <div class="border-top border-secondary pt-4">
+                        <h6 class="text-warning text-uppercase small fw-bold mb-3 tracking-wider">
+                            <i class="bi bi-translate me-2"></i>Plain Language Meteorological Translation
+                        </h6>
+                        
+                        <div class="row g-4">
+                            <?php if (!empty($decodedTaf)): ?>
+                                <?php foreach ($decodedTaf as $line): ?>
+                                    <div class="col-12">
+                                        <div class="row g-2 ps-2">
+                                            <div class="col-12">
+                                                <div class="translation-item p-3 text-light d-flex align-items-start">
+                                                    <?php if (strpos($line, 'bi-clock-history') !== false): ?>
+                                                        <span class="w-100"><?php echo $line; ?></span>
+                                                    <?php else: ?>
+                                                        <i class="bi bi-arrow-right-short text-warning me-2 flex-shrink-0 fs-5"></i> 
+                                                        <span style="font-size: 0.95rem; line-height: 1.5;"><?php echo $line; ?></span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="col-12">
+                                    <div class="text-muted italic py-2 ps-2">No translation strings generated for this timeframe.</div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>                                                    
+
+                </div>
+            </div>
+        </div>
 </div>
 
-<?php include '../../footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

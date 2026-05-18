@@ -1,146 +1,229 @@
 <?php
 /**
  * Professional AeroMeteo METAR Generator
- * Following ICAO/WMO Reporting Standards
+ * Following ICAO/WMO Annex 3 Reporting Standards
+ * Includes Dynamic 2-Hour Trend Forecast Engine (BECMG / TEMPO / NOSIG)
  */
 
 class MetarGenerator {
     
-    // Official ICAO Mapping for Nigerian Airports
     private static $icao_map = [
-    // Major International Airports
-    'Lagos' => 'DNMM', // Murtala Muhammed International Airport
-    'Abuja' => 'DNAA', // Nnamdi Azikiwe International Airport
-    'Kano' => 'DNKN', // Mallam Aminu Kano International Airport
-    'Port Harcourt' => 'DNPO', // Port Harcourt International Airport
-    'Enugu' => 'DNEN', // Akanu Ibiam International Airport
+        'Lagos' => 'DNMM', 'Ikeja' => 'DNMM', 'Abuja' => 'DNAA', 'Kano' => 'DNKN', 
+        'Port Harcourt' => 'DNPO', 'Enugu' => 'DNEN', 'Kaduna' => 'DNKA',
+        'Maiduguri' => 'DNMA', 'Benin' => 'DNBE', 'Ilorin' => 'DNIL',
+        'Yola' => 'DNYO', 'Jos' => 'DNJO', 'Owerri' => 'DNOW',
+        'Calabar' => 'DNCA', 'Uyo' => 'DNAI', 'Sokoto' => 'DNSO',
+        'Katsina' => 'DNKT', 'Zaria' => 'DNZA', 'Bauchi' => 'DNBA',
+        'Gombe' => 'DNGO', 'Minna' => 'DNMN', 'Akure' => 'DNAK',
+        'Ibadan' => 'DNIB', 'Warri' => 'DNSU', 'Asaba' => 'DNAS',
+        'Jalingo' => 'DNJA', 'Birnin Kebbi' => 'DNBI'
+    ];
 
-    // Major Domestic Airports
-    'Kaduna' => 'DNKA',
-    'Maiduguri' => 'DNMA',
-    'Benin' => 'DNBE',
-    'Ilorin' => 'DNIL',
-    'Yola' => 'DNYO',
-    'Jos' => 'DNJO',
-    'Owerri' => 'DNOW',
-    'Calabar' => 'DNCA',
-    'Uyo' => 'DNAI',
-    'Sokoto' => 'DNSO',
-    'Katsina' => 'DNKT',
-    'Zaria' => 'DNZA',
-    'Bauchi' => 'DNBA',
-    'Gombe' => 'DNGO',
-    'Minna' => 'DNMN',
-    'Akure' => 'DNAK',
-    'Ibadan' => 'DNIB',
-    'Warri' => 'DNSU', // Osubi Airstrip
-    'Asaba' => 'DNAS',
-    'Jalingo' => 'DNJA',
-    'Birnin Kebbi' => 'DNBI',
-
-    // Oil & Private / Airstrips
-    'Escravos' => 'DNES',
-    'Bonny' => 'DNBN',
-    'Brass' => 'DNBR',
-    'Eket' => 'DNEK',
-
-    // Military / Special Use (limited civil relevance but useful for completeness)
-    'Makurdi' => 'DNMK',
-    'Shasha' => 'DNSH',
-
-    // Lesser-known / regional strips (may have limited ops or seasonal use)
-    'Kontagora' => 'DNKO',
-    'Nguru' => 'DNNG',
-    'Potiskum' => 'DNPM',
-    'Ibi' => 'DNIBI' // Rare / not always officially standardized
-];
-
-    /**
-     * Helper to get ICAO code from City Name
-     */
     public static function getIcao($cityName) {
-        // Iuse the map, or return a generic code if city isn't in our aviation list
         return self::$icao_map[$cityName] ?? 'DNXX';
     }
 
-    public static function generate($data) {
-        if (!isset($data['name'])) return "NIL";
+    /**
+     * Primary METAR generation method
+     * @param array $current - Current weather data
+     * @param array|null $forecast2h - Weather data representing the condition ~2 hours out
+     */
+    public static function generate($current, $forecast2h = null) {
+        if (!isset($current['name'])) return "NIL";
 
-        // 1. Station Identification
-        $icao = self::getIcao($data['name']);
+        // a, b) Identification & Location
+        $icao = self::getIcao($current['name']);
 
-        // 2. Date & Time (UTC/Z)
+        // c) Time of Observation (UTC)
         $timestamp = gmdate('dHi') . 'Z';
 
-        // 3. Wind Logic
-        $dir = str_pad($data['wind']['deg'] ?? 0, 3, '0', STR_PAD_LEFT);
-        $speed = str_pad(round(($data['wind']['speed'] ?? 0) * 1.94384), 2, '0', STR_PAD_LEFT);
-        $wind = "{$dir}{$speed}KT";
+        // d) Automated Identifier
+        $auto = "AUTO";
 
-        // 4. CAVOK & Visibility Logic
-        // ICAO Standard: Visibility > 10km, No clouds below 5000ft, No significant weather
-        $vis_meters = $data['visibility'] ?? 10000;
-        // Check for significant weather conditions (e.g., Rain, Thunderstorm, Snow)
-        $has_bad_weather = !empty($data['weather'][0]['main']) && !in_array($data['weather'][0]['main'], ['Clear', 'Clouds']);
-        
+        // e) Surface Wind Logic
+        $wind = self::formatWind($current['wind'] ?? []);
+
+        // Weather Assessment Setup
+        $weather_main = $current['weather'][0]['main'] ?? 'Clear';
+        $weather_desc = $current['weather'][0]['description'] ?? '';
+        $sig_weather_code = self::parseSignificantWeather($weather_main, $weather_desc);
+        $is_highly_significant = (bool)preg_match('/(TS|RA|DZ|SN|GR|GS|VA|SQ)/i', $sig_weather_code);
+
+        // f) Visibility Logic
+        $vis_meters = $current['visibility'] ?? 10000;
+        $clouds_pct = $current['clouds']['all'] ?? 0;
+        $has_low_clouds = ($clouds_pct > 0); 
+
         $cavok = false;
-        if ($vis_meters >= 10000 && !$has_bad_weather) {
+        $vis_string = "";
+
+        if ($vis_meters >= 10000 && !$is_highly_significant && !$has_low_clouds) {
             $cavok = true;
             $vis_string = "CAVOK";
         } else {
-            $vis_string = str_pad($vis_meters, 4, '0', STR_PAD_LEFT) . " ";
+            $vis_string = ($vis_meters >= 10000) ? "9999" : str_pad($vis_meters, 4, '0', STR_PAD_LEFT);
         }
 
-        // 5. Temperature and Dew Point
-        $tempVal = round($data['main']['temp']);
-        $hum = $data['main']['humidity'];
+        // h) Present Weather Reporting
+        $weather_string = "";
+        if ($is_highly_significant || (!empty($sig_weather_code) && $vis_meters <= 5000)) {
+            $weather_string = $sig_weather_code . " ";
+        }
+
+        // i) Cloud Layers Logic
+        $cloud_string = "";
+        if (!$cavok) {
+            $cloud_string = self::formatClouds($clouds_pct, $sig_weather_code);
+        }
+
+        // j) Temperature & Dew Point
+        $tempVal = round($current['main']['temp'] ?? 0);
+        $hum = $current['main']['humidity'] ?? 50;
         $dewVal = round($tempVal - ((100 - $hum) / 5));
         
-        // Handle negative temps (M05)
         $t = ($tempVal < 0) ? "M" . str_pad(abs($tempVal), 2, '0', STR_PAD_LEFT) : str_pad($tempVal, 2, '0', STR_PAD_LEFT);
         $d = ($dewVal < 0) ? "M" . str_pad(abs($dewVal), 2, '0', STR_PAD_LEFT) : str_pad($dewVal, 2, '0', STR_PAD_LEFT);
         $temp_dew = "{$t}/{$d}";
 
-        // 6. Altimeter (QNH)
-        $qnh = "Q" . ($data['main']['pressure'] ?? 1013);
+        // k) QNH
+        $qnh = "Q" . ($current['main']['pressure'] ?? 1013);
 
-        // Assemble Final METAR
-        $output = "METAR {$icao} {$timestamp} {$wind} ";
-        $output .= $cavok ? "CAVOK " : "{$vis_string} ";
-        $output .= "{$temp_dew} {$qnh} NOSIG";
+        // l) Generate Trend Forecast Group (WMO Annex 3 2-Hour Validity)
+        $trend_string = self::generateTrend($current, $forecast2h);
+
+        // Compile Complete Standard Report
+        $output = "METAR {$icao} {$timestamp} {$auto} {$wind} ";
+        if ($cavok) {
+            $output .= "CAVOK ";
+        } else {
+            $output .= "{$vis_string} " . $weather_string . $cloud_string;
+        }
+        $output .= "{$temp_dew} {$qnh} {$trend_string}";
 
         return $output;
     }
 
-    //generate TAF (simplified for demo)
-    public static function generateTAF($data) {
-        if (!isset($data['name'])) return "NIL";
+    /**
+     * WMO Annex 3 Trend Forecast Calculation Engine (2-Hour Validation Window)
+     */
+    private static function generateTrend($current, $future) {
+        // If no short-term trend forecast data is provided, fall back safely to NOSIG
+        if (!$future || !isset($future['wind']) || !isset($future['visibility'])) {
+            return "NOSIG";
+        }
 
-        $icao = self::getIcao($data['name']);
-        $timestamp = gmdate('dHi') . 'Z';
+        $change_indicators = [];
+        $is_temporary = false;
 
-        // For simplicity, we'll just create a basic TAF with a 24-hour forecast
-        $taf = "TAF {$icao} {$timestamp} ";
-        $taf .= "FM" . gmdate('dHi', strtotime('+1 hour')) . " 00000KT CAVOK ";
-        $taf .= "FM" . gmdate('dHi', strtotime('+6 hours')) . " 18010KT 5000 RA ";
-        $taf .= "FM" . gmdate('dHi', strtotime('+12 hours')) . " 36015KT SCT020 BKN100 ";
-        $taf .= "FM" . gmdate('dHi', strtotime('+18 hours')) . " 27005KT CAVOK ";
+        // 1. Wind Trend Evaluation (Significant changes: speed change >= 10KT or change in direction)
+        $curr_wind_kt = round(($current['wind']['speed'] ?? 0) * 1.94384);
+        $fut_wind_kt = round(($future['wind']['speed'] ?? 0) * 1.94384);
+        $curr_deg = $current['wind']['deg'] ?? 0;
+        $fut_deg = $future['wind']['deg'] ?? 0;
 
-        return $taf;
+        if (abs($curr_wind_kt - $fut_wind_kt) >= 10 || (abs($curr_deg - $fut_deg) >= 60 && $fut_wind_kt > 10)) {
+            $change_indicators[] = self::formatWind($future['wind']);
+        }
+
+        // 2. Visibility Trend Evaluation (Significant threshold boundaries crossing 1500m, 3000m, or 5000m)
+        $curr_vis = $current['visibility'] ?? 10000;
+        $fut_vis = $future['visibility'] ?? 10000;
+        
+        if (self::crossedVisibilityThreshold($curr_vis, $fut_vis)) {
+            $change_indicators[] = ($fut_vis >= 10000) ? "9999" : str_pad($fut_vis, 4, '0', STR_PAD_LEFT);
+        }
+
+        // 3. Present Weather Trend Evaluation (Onset or cessation of hazardous operational conditions)
+        $curr_weather = self::parseSignificantWeather($current['weather'][0]['main'] ?? '', $current['weather'][0]['description'] ?? '');
+        $fut_weather = self::parseSignificantWeather($future['weather'][0]['main'] ?? '', $future['weather'][0]['description'] ?? '');
+
+        if ($curr_weather !== $fut_weather) {
+            if (!empty($fut_weather)) {
+                $change_indicators[] = $fut_weather;
+                // Convective thunderstorm lines imply highly fluctuating/temporary conditions
+                if (strpos($fut_weather, 'TS') !== false) {
+                    $is_temporary = true;
+                }
+            } else {
+                $change_indicators[] = "NSW"; // No Significant Weather (Cessation)
+            }
+        }
+
+        // 4. Cloud Trend Evaluation (Crossing operational minimum bases below 1500m / 5000ft)
+        $curr_clouds = $current['clouds']['all'] ?? 0;
+        $fut_clouds = $future['clouds']['all'] ?? 0;
+        if (abs($curr_clouds - $fut_clouds) >= 30) { 
+            $change_indicators[] = self::formatClouds($fut_clouds, $fut_weather);
+        }
+
+        // Determine matching change indicator syntax structure
+        if (empty($change_indicators)) {
+            return "NOSIG";
+        }
+
+        $trend_type = $is_temporary ? "TEMPO" : "BECMG";
+        return $trend_type . " " . implode(' ', $change_indicators);
     }
 
-    //generate pressure altitude (simplified)
+    private static function formatWind($wind_data) {
+        $speed_ms = $wind_data['speed'] ?? 0;
+        $speed_kt = round($speed_ms * 1.94384);
+        $deg = $wind_data['deg'] ?? 0;
+        $gust_ms = $wind_data['gust'] ?? 0;
+        $gust_kt = round($gust_ms * 1.94384);
+
+        if ($speed_kt === 0.0 || $speed_kt === 0) return "00000KT";
+        if ($speed_kt <= 2) return "VRB" . str_pad($speed_kt, 2, '0', STR_PAD_LEFT) . "KT";
+        
+        $dir = str_pad($deg, 3, '0', STR_PAD_LEFT);
+        $spd = str_pad($speed_kt, 2, '0', STR_PAD_LEFT);
+        
+        if ($gust_kt >= 10) {
+            return "{$dir}{$spd}G" . str_pad($gust_kt, 2, '0', STR_PAD_LEFT) . "KT";
+        }
+        return "{$dir}{$spd}KT";
+    }
+
+    private static function formatClouds($clouds_pct, $weather_code) {
+        if ($clouds_pct == 0) return "NSC ";
+        
+        $cloud_type = (strpos($weather_code, 'TS') !== false) ? "CB" : "";
+        $height_token = "020"; // 2000ft standard baseline representation 
+
+        if ($clouds_pct <= 25)  return "FEW" . $height_token . $cloud_type . " ";
+        if ($clouds_pct <= 50)  return "SCT" . $height_token . $cloud_type . " ";
+        if ($clouds_pct <= 87.5) return "BKN" . $height_token . $cloud_type . " ";
+        return "OVC" . $height_token . $cloud_type . " ";
+    }
+
+    private static function crossedVisibilityThreshold($curr, $fut) {
+        $thresholds = [1500, 3000, 5000, 10000];
+        foreach ($thresholds as $t) {
+            if (($curr < $t && $fut >= $t) || ($curr >= $t && $fut < $t)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static function parseSignificantWeather($main, $desc) {
+        $main = strtolower($main); $desc = strtolower($desc);
+        if (strpos($main, 'thunderstorm') !== false) return (strpos($desc, 'rain') !== false) ? "TSRA" : "TS";
+        if (strpos($main, 'drizzle') !== false) return "DZ";
+        if (strpos($main, 'rain') !== false) {
+            if (strpos($desc, 'light') !== false) return "-RA";
+            if (strpos($desc, 'heavy') !== false) return "+RA";
+            return "RA";
+        }
+        if (strpos($main, 'dust') !== false) return "DU";
+        if (strpos($main, 'haze') !== false) return "HZ";
+        if (strpos($main, 'mist') !== false) return "BR";
+        if (strpos($main, 'fog') !== false) return "FG";
+        return "";
+    }
+
     public static function generatePressureAlt($data) {
-        if (!isset($data['name'])) return "NIL";
-
         $qnh = $data['main']['pressure'] ?? 1013;
-        $elevation_meters = $data['main']['elevation'] ?? 0;
-
-        // Pressure Altitude = Elevation + (Standard Pressure - QNH) * 27
-        $pressure_alt = round($elevation_meters + (1013.25 - $qnh) * 27);
-
-        // Convert to inches for aviation standard
-        $pressure_alt_inches = round($qnh * 0.02953, 2); // Convert meters to feet
-        return "{$pressure_alt_inches} inHg";
+        return round($qnh * 0.02953, 2) . " inHg";
     }
 }

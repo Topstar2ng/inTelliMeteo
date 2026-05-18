@@ -68,65 +68,17 @@ if (isset($_POST['calc_type'])) {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Computations | IntelliMeteo</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="apple-touch-icon" sizes="180x180" href="../../assets/favicons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../../assets/favicons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../../assets/favicons/favicon-16x16.png">
-    <link rel="manifest" href="../../assets/favicons/site.webmanifest">
-    <style>
-        .logo-img { width: 30px; height: 30px; margin-right: 10px; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
-         
-    </style>
-</head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="index.php">
-            <img src="../../assets/images/intellimeteo_icon.png" class="logo-img"> 
-            IntelliMeteo <span class="d-none d-md-inline">: A Weather & Meteo Analytics Portal</span>
-        </a>
-        
-        <div class="d-flex align-items-center">
-            <!-- Search Form (Always Visible) -->
-            <form class="d-flex me-3" action="index.php" method="GET">
-                <input class="form-control search-input form-control-sm" type="search" name="city" placeholder="City..." aria-label="Search" required>
-                <button class="btn btn-primary btn-sm search-btn" type="submit" title="search..."><i class="bi bi-search-heart"></i></button>
-            </form>
-
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <!-- USER VIEW: Logged In -->
-                <span class="text-light me-3 small d-none d-lg-inline">
-                    Hi, <strong><?php echo explode(' ', $_SESSION['full_name'])[0]; ?></strong>
-                </span>
-                
-                <!-- Logout Button -->
-                <a href="../../logout.php" class="btn btn-outline-danger btn-sm me-2" title="Logout">
-                    <i class="bi bi-box-arrow-right"></i>
-                </a>
-
-                <!-- Settings Icon -->
-                <a href="../../modules/settings/index.php" class="text-white fs-5 lh-1 p-1 hover-rotate" title="Settings">
-                    <i class="bi bi-gear-fill"></i>
-                </a>
-            <?php else: ?>
-                <!-- GUEST VIEW: Not Logged In -->
-                <a href="login.php" class="btn btn-outline-light btn-sm me-2"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-                <a href="register.php" class="btn btn-primary btn-sm"><i class="bi bi-person-add"></i> Register</a>
-            <?php endif; ?>
-        </div>
-    </div>
-</nav>
+<?php include '../../includes/header.php'; ?>
 <div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-danger"><i class="bi bi-calculator"></i> Computations</h2>
-        <a href="../../index.php" class="btn btn-primary btn-sm"><i class="bi bi-house-heart"></i> Dashboard</a>
+        <div class="btn-group shadow-sm" role="group">
+            <a href="../../index.php" class="btn btn-outline-secondary btn-sm btn-nav-accent" title="Dashboard"><i class="bi bi-house-heart"></i></a>
+            <a href="../meteolytics/index.php" class="btn btn-outline-secondary btn-sm btn-nav-accent" title="Meteolytics"><i class="bi bi-graph-up-arrow text-danger"></i></a>
+            <a href="../agrometeo/index.php" class="btn btn-outline-secondary btn-sm btn-nav-accent" title="AgroMet"><i class="bi bi-tree-fill text-success"></i></a>
+            <a href="../forecasts/index.php" class="btn btn-outline-secondary btn-sm btn-nav-accent" title="Forecast"><i class="bi bi-cloud-download text-warning"></i></a>
+            <a href="../aerometeo/index.php" class="btn btn-outline-secondary btn-sm btn-nav-accent" title="AeroMet"><i class="bi bi-airplane-fill text-info"></i></a>
+        </div>
     </div>
     <div class="row">
         <div class="col-lg-3 mb-4">
@@ -232,9 +184,6 @@ if (isset($_POST['calc_type'])) {
                 
                 <form method="POST" id="quickconverter">
                     <div class="mb-2">
-                        <input type="number" step="0.01" name="conv_val" class="form-control form-control-sm" placeholder="Value" required>
-                    </div>
-                    <div class="mb-2">
                         <select name="conv_type" class="form-select form-select-sm">
                             <option value="ctof">Celsius to Fahrenheit</option>
                             <option value="mskt">m/s to Knots (KT)</option>
@@ -242,6 +191,10 @@ if (isset($_POST['calc_type'])) {
                             <option value="mmin">Rainfall (mm to in)</option>
                         </select>
                     </div>
+                    <div class="mb-2">
+                        <input type="number" step="0.01" name="conv_val" class="form-control form-control-sm" placeholder="Value" required>
+                    </div>
+                    
                     <button type="submit" name="convert" class="btn btn-dark btn-sm w-100">Convert</button>
                 </form>
 
@@ -270,4 +223,4 @@ if (isset($_POST['calc_type'])) {
             </div>
 </div>
 
-<?php include '../../footer.php'; ?>
+<?php include '../../includes/footer.php'; ?>

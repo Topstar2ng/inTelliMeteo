@@ -13,5 +13,15 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+// Custom JS for preloader
+<script>
+    window.addEventListener("load", function() {
+        const loader = document.getElementById("preloader");
+        // Add a slight delay for a smoother "reveal" effect
+        setTimeout(() => {
+            loader.classList.add("loader-hidden");
+        }, 500); 
+    });
+</script>
 </body>
 </html>
