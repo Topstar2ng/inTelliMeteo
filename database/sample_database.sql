@@ -1,0 +1,361 @@
+--
+-- Database: `intellimeteo_db`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `airports`
+--
+
+DROP TABLE IF EXISTS `airports`;
+CREATE TABLE IF NOT EXISTS `airports` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `airport_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `iata_code` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `icao_code` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `type` enum('international','domestic','military','private') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` tinyint DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `assessment_scores`
+--
+
+DROP TABLE IF EXISTS `assessment_scores`;
+CREATE TABLE IF NOT EXISTS `assessment_scores` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `score_achieved` int NOT NULL,
+  `total_questions` int NOT NULL,
+  `percentage` decimal(5,2) NOT NULL,
+  `attempted_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ngcities`
+--
+
+DROP TABLE IF EXISTS `ngcities`;
+CREATE TABLE IF NOT EXISTS `ngcities` (
+  `tblid` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `datetime` datetime NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`tblid`),
+  KEY `name` (`name`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quiz_questions`
+--
+
+DROP TABLE IF EXISTS `quiz_questions`;
+CREATE TABLE IF NOT EXISTS `quiz_questions` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `category` varchar(50) NOT NULL,
+  `question_text` text NOT NULL,
+  `option_a` text NOT NULL,
+  `option_b` text NOT NULL,
+  `option_c` text NOT NULL,
+  `option_d` text NOT NULL,
+  `correct_option` char(1) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sun_data`
+--
+
+DROP TABLE IF EXISTS `sun_data`;
+CREATE TABLE IF NOT EXISTS `sun_data` (
+  `tblid` int NOT NULL AUTO_INCREMENT,
+  `location_id` int NOT NULL,
+  `data_date` date NOT NULL,
+  `data_time` time NOT NULL,
+  `sunrise` int NOT NULL,
+  `sunset` int NOT NULL,
+  `date` datetime NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`tblid`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `full_name` varchar(100) NOT NULL,
+  `email` varchar(150) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `location` varchar(100) DEFAULT NULL,
+  `workplace` varchar(150) DEFAULT NULL,
+  `profession` varchar(100) DEFAULT NULL,
+  `purpose` varchar(150) DEFAULT NULL,
+  `role` enum('student','observer','admin') DEFAULT 'student',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_settings`
+--
+
+DROP TABLE IF EXISTS `user_settings`;
+CREATE TABLE IF NOT EXISTS `user_settings` (
+  `user_id` int NOT NULL,
+  `home_station` varchar(100) DEFAULT 'Abuja',
+  `unit_system` enum('metric','imperial') DEFAULT 'metric',
+  `timezone` varchar(50) DEFAULT 'Africa/Lagos',
+  `theme_preference` enum('light','dark') DEFAULT 'light',
+  PRIMARY KEY (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `weather_data`
+--
+
+DROP TABLE IF EXISTS `weather_data`;
+CREATE TABLE IF NOT EXISTS `weather_data` (
+  `tblid` int NOT NULL,
+  `location_id` int NOT NULL,
+  `data_date` date NOT NULL,
+  `data_time` time NOT NULL,
+  `temperature` float NOT NULL,
+  `feels_like` float NOT NULL,
+  `humidity` float NOT NULL,
+  `pressure` float NOT NULL,
+  `sea_level` float NOT NULL,
+  `grnd_level` float NOT NULL,
+  `wind_direction` int NOT NULL,
+  `wind_speed` int NOT NULL,
+  `gust` int NOT NULL,
+  `weather_id` int NOT NULL,
+  `weather_description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `cloud` int NOT NULL,
+  `visibility` int NOT NULL,
+  `date` datetime NOT NULL,
+  `status` int NOT NULL DEFAULT '1'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `weather_forecast`
+--
+
+DROP TABLE IF EXISTS `weather_forecast`;
+CREATE TABLE IF NOT EXISTS `weather_forecast` (
+  `tblid` int NOT NULL AUTO_INCREMENT,
+  `cityid` int NOT NULL,
+  `recorddate` datetime NOT NULL,
+  `forecastdate` datetime NOT NULL,
+  `temperature` float NOT NULL,
+  `humidity` float NOT NULL,
+  `pressure` float NOT NULL,
+  `wind_direction` int NOT NULL,
+  `wind_speed` float NOT NULL,
+  `weatherid` int NOT NULL,
+  `visibility` float NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`tblid`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `weather_forecast_observed_view`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `weather_forecast_observed_view`;
+CREATE TABLE IF NOT EXISTS `weather_forecast_observed_view` (
+`datetime` varchar(21)
+,`forecast_temperature` double
+,`observed_temperature` float
+);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `weather_reports`
+--
+
+DROP TABLE IF EXISTS `weather_reports`;
+CREATE TABLE IF NOT EXISTS `weather_reports` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `city_name` varchar(100) NOT NULL,
+  `icao_code` varchar(10) DEFAULT 'DNXX',
+  `temp` decimal(5,2) NOT NULL,
+  `humidity` int NOT NULL,
+  `pressure` int NOT NULL,
+  `wind_speed_kt` decimal(5,2) NOT NULL,
+  `metar_string` text NOT NULL,
+  `planting_status` varchar(20) NOT NULL,
+  `agro_advice` text NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `website_comment`
+--
+
+DROP TABLE IF EXISTS `website_comment`;
+CREATE TABLE IF NOT EXISTS `website_comment` (
+  `tblid` int NOT NULL AUTO_INCREMENT,
+  `_name` varchar(100) NOT NULL,
+  `_email` varchar(100) NOT NULL,
+  `_profession` varchar(100) NOT NULL,
+  `_comment` text NOT NULL,
+  `_status` int NOT NULL DEFAULT '0',
+  `_date` datetime NOT NULL,
+  `_adminid` int NOT NULL,
+  `_approveddate` datetime NOT NULL,
+  PRIMARY KEY (`tblid`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `website_contact`
+--
+
+DROP TABLE IF EXISTS `website_contact`;
+CREATE TABLE IF NOT EXISTS `website_contact` (
+  `tblid` int NOT NULL AUTO_INCREMENT,
+  `_name` varchar(100) NOT NULL,
+  `_email` varchar(100) NOT NULL,
+  `_subject` varchar(100) NOT NULL,
+  `_message` text NOT NULL,
+  `_status` int NOT NULL DEFAULT '0',
+  `_date` datetime NOT NULL,
+  `_adminid` int NOT NULL,
+  `_approveddate` datetime NOT NULL,
+  PRIMARY KEY (`tblid`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `weather_forecast_observed_view`
+--
+DROP TABLE IF EXISTS `weather_forecast_observed_view`;
+
+DROP VIEW IF EXISTS `weather_forecast_observed_view`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`tecsfrzo`@`localhost` SQL SECURITY DEFINER VIEW `weather_forecast_observed_view`  AS SELECT `forecast_data`.`datetime` AS `datetime`, `forecast_data`.`forecast_temperature` AS `forecast_temperature`, `observed_data`.`observed_temperature` AS `observed_temperature` FROM ((select date_format(`wf`.`forecastdate`,'%Y-%m-%d %H:%i') AS `datetime`,round((`wf`.`temperature` - 273.15),2) AS `forecast_temperature` from `weather_forecast` `wf` where ((time_format(`wf`.`forecastdate`,'%i') = '00') and (`wf`.`cityid` = '5') and (`wf`.`forecastdate` between '2024-04-29 00:00' and '2024-04-29 23:59') and (hour(`wf`.`forecastdate`) in (0,3,6,9,12,15,18)))) `forecast_data` left join (select date_format((`wd`.`date` + interval 3 hour),'%Y-%m-%d %H:%i') AS `datetime`,`wd`.`temperature` AS `observed_temperature` from `weather_data` `wd` where ((time_format(`wd`.`data_time`,'%i') = '00') and (`wd`.`location_id` = '5') and (`wd`.`date` between '2024-04-28 20:00' and '2024-04-29 19:59') and (hour(`wd`.`date`) in (0,3,6,9,12,15,18)))) `observed_data` on((`forecast_data`.`datetime` = `observed_data`.`datetime`))) ORDER BY `forecast_data`.`datetime` ASC ;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `assessment_scores`
+--
+ALTER TABLE `assessment_scores`
+  ADD CONSTRAINT `assessment_scores_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+COMMIT;
+
+INSERT INTO `quiz_questions` (`id`, `category`, `question_text`, `option_a`, `option_b`, `option_c`, `option_d`, `correct_option`, `created_at`, `status`) VALUES
+(1, 'aviation', 'According to ICAO Annex 3 standards, a surface wind speed of 2 knots or less with variable direction must be coded using which format?', '00000KT', 'VRB02KT', 'CLM02KT', 'Variable winds are omitted from reports below 5 knots', 'B', '2026-05-17 17:26:45', 1),
+(2, 'aviation', 'Under what specific structural condition can the CAVOK operational shortcut override horizontal visibility and cloud parameters?', 'Visibility >= 10km, no convective clouds, and no significant weather changes.', 'Visibility >= 10km, no clouds below 5,000 feet (or highest minimum sector altitude), and no operational significant weather.', 'Clear skies below 10,000 feet absolute altitude.', 'When a high-pressure anticyclone cell settles completely over the terminal airfield indicators.', 'B', '2026-05-17 17:26:45', 1),
+(3, 'aviation', 'If a TAF contains the weather token \'OVC015CB\', what critical hazard warning is implicitly delivered to flight dispatchers?', 'An automated sensor error caused an invalid cloud layer output.', 'Overcast layer with present visibility restrictions due to coastal sea breeze advection.', 'Overcast cloud layer at 1,500 feet containing hazardous Cumulonimbus storm structures.', 'Cirrostratus cloud bands developing over mountain wave terrain lines.', 'C', '2026-05-17 17:26:45', 1),
+(4, 'aviation', 'In an aviation METAR report, the descriptor \'FZ\' (e.g., FZRA) explicitly defines which physical atmospheric phenomenon?', 'Frontal Zone turbulence dynamics', 'Freezing conditions where supercooled water droplets freeze instantly on impact', 'Frictional Zone low-level wind shear vectors', 'Frequent lightning activity observed over the local terminal aerodrome', 'B', '2026-05-17 17:26:45', 1),
+(5, 'aviation', 'According to WMO Technical Regulations, what is the core operational distinction between a METAR and a SPECI report?', 'METAR is automated by hardware sensors while SPECI is manually compiled by human observers.', 'METAR is an observation taken at fixed hourly or half-hourly intervals, whereas SPECI is generated dynamically when critical safety thresholds are crossed.', 'METAR represents regional airspace grids while SPECI applies exclusively to oceanic flight information regions.', 'METAR applies to long-range flight planning while SPECI is used only for helicopter tactical missions.', 'B', '2026-05-17 17:26:45', 1),
+(6, 'aviation', 'What does the acronym WS WRNG shorthand signify within a standard automated terminal weather broadcast?', 'Widespread Storm Warning across regional airspace grids', 'Wind Shear Warning indicating hazardous kinetic speed/direction shifting vectors on runway sectors', 'Winter Snow Warning detailing heavy freezing accumulation profiles', 'Westerly Squall Alert mapping fast-moving convective fronts', 'B', '2026-05-17 17:26:45', 1),
+(7, 'aviation', 'An operational forecast element marked \'BECMG 1416\' within a terminal aviation bulletin indicates what time vector parameters?', 'A complete weather parameter inversion ending precisely at 14:16 UTC.', 'A regular, evolutionary weather change transitioning continuously between 1400 UTC and 1600 UTC.', 'A temporary, fluctuating fluctuation lasting less than one hour between 14:00 and 16:00 local time.', 'An urgent advisory update scheduled for deployment on the 14th day of the current month at 1600 UTC.', 'B', '2026-05-17 17:26:45', 1),
+(8, 'aviation', 'Under ICAO visibility criteria, if the Runway Visual Range (RVR) varies rapidly over a 10-minute assessment matrix, how is the directional volatility reported?', 'The observation is discarded entirely due to instrumental sample instability.', 'The maximum and minimum 1-minute mean values are reported (e.g., RVR R04/P1500N).', 'The direct arithmetic mean value is calculated and absolute volatility limits are ignored.', 'A localized hazard alert flags the tower manually without modifying standard code fields.', 'B', '2026-05-17 17:26:45', 1),
+(9, 'aviation', 'Which specific structural classification code represents an intense, fast-moving convective line of multi-cell thunderstorms within a METAR?', 'SFC', 'SQ', 'BLCY', 'DS', 'B', '2026-05-17 17:26:45', 1),
+(10, 'aviation', 'When an aviation forecaster writes the identifier \'TEMPO 2201\' into an operational routing forecast brief, what duration constraint applies to the predicted event?', 'The changes will persist continuously from 22:00 UTC until 01:00 UTC.', 'Frequent temporary fluctuations lasting less than one hour in each instance, aggregating less than half the overall period.', 'An emergency storm system tracking southwest at 22 knots over 1 hour.', 'A minor atmospheric pressure wave cycle repeating every 22 minutes past the hour.', 'B', '2026-05-17 17:26:45', 1),
+(11, 'general', 'What meteorological outcome is expected when the ambient air temperature drops to match the dew point temperature?', 'Rapid atmospheric evaporation begins instantly.', 'Relative humidity drops to 0%, inducing clear sky conditions.', 'The air reaches 100% saturation, forcing water vapor condensation into mist, fog, or dew.', 'Barometric pressure increases rapidly causing sudden katabatic drainage winds.', 'C', '2026-05-17 17:26:45', 1),
+(12, 'general', 'The process by which solar energy converts ground moisture directly into atmospheric vapor, driving early morning convection cycles, is termed:', 'Sublimation Matrix', 'Adiabatic expansion', 'Evapotranspiration', 'Thermodynamic Advection', 'C', '2026-05-17 17:26:45', 1),
+(13, 'general', 'Which force is directly responsible for generating the initial movement of air, acting perpendicular to isobars from high to low pressure cells?', 'Coriolis Force', 'Centrifugal Force', 'Pressure Gradient Force', 'Frictional Boundary Layer Force', 'C', '2026-05-17 17:26:45', 1),
+(14, 'general', 'What does a rapid, sustained drop in barometric pressure readings typically signify to operational weather analysts?', 'The immediate approach of an anticyclonic high-pressure air mass yielding clear stable skies.', 'The approach of a low-pressure cyclonic system, indicating rising air currents, cloud formation, and potential precipitation.', 'A sudden drop in local relative humidity indices.', 'The complete cessation of local katabatic and anabatic wind vectors.', 'B', '2026-05-17 17:26:45', 1),
+(15, 'general', 'In the Northern Hemisphere, what is the standard rotation direction of winds circling a well-developed low-pressure system (cyclone)?', 'Clockwise and outward toward high pressure zones', 'Clockwise and inward toward the core center', 'Counter-clockwise and inward toward the core center', 'Counter-clockwise and outward toward the periphery', 'C', '2026-05-17 17:26:45', 1),
+(16, 'general', 'What physical process occurs inside an air parcel during dry adiabatic ascent through the troposphere?', 'The parcel absorbs external latent heat energy causing expansion.', 'The parcel expands due to dropping environmental pressure, resulting in an internal temperature drop without energy exchange.', 'The parcel contracts and experiences compression heating.', 'Relative humidity drops linearly while moisture content increases exponentially.', 'B', '2026-05-17 17:26:45', 1),
+(17, 'general', 'Which cloud type is explicitly categorized as a high-altitude cloud entirely composed of ice crystals, often appearing as thin, wispy strands?', 'Stratus', 'Altocumulus', 'Cirrus', 'Cumulus', 'C', '2026-05-17 17:26:45', 1),
+(18, 'general', 'What type of front is formed when a fast-moving cold air mass overtakes a slower warm air mass, lifting the warm air completely off the ground surface?', 'Stationary Front', 'Occluded Front', 'Thermal Trough', 'Dryline Front', 'B', '2026-05-17 17:26:45', 1),
+(19, 'general', 'The absolute measurement of the total mass of water vapor present within a specific, distinct volume of air is defined as:', 'Relative Humidity', 'Mixing Ratio', 'Absolute Humidity', 'Specific Humidity', 'C', '2026-05-17 17:26:45', 1),
+(20, 'general', 'What primary global wind system resides between the equator and approximately 30 degrees latitude in both hemispheres?', 'The Prevailing Westerlies', 'The Polar Easterlies', 'The Trade Winds (Easterlies)', 'The Jet Stream Core Boundary', 'C', '2026-05-17 17:26:45', 1),
+(21, 'agro', 'In sub-Saharan rain-fed agriculture tracking, how is the structural threshold for the \'Onset of the Wet Season\' primarily evaluated?', 'By counting three consecutive calendar days registering air temperatures above 35 degrees Celsius.', 'By tracking a specific volume of cumulative rainfall (e.g., 20mm in 3 days) without a subsequent long dry spell.', 'By monitoring the absolute barometric pressure minimum over regional capital centers.', 'By verifying a drop in relative soil moisture below 10% saturation capacity.', 'B', '2026-05-17 17:26:45', 1),
+(22, 'agro', 'What is the primary operational utility of computing Growing Degree Days (GDD) metrics for agricultural managers?', 'To measure the total depth of soil water erosion during storm cycles.', 'To predict crop phenological development stages and estimate potential harvest dates based on accumulated heat units.', 'To evaluate the market pricing matrix of cash crops against local logistics networks.', 'To measure the exact concentration of nitrogen particles inside the local topsoil layer.', 'B', '2026-05-17 17:26:45', 1),
+(23, 'agro', 'At what soil moisture status is water tightly bound to soil particles by capillary forces such that plant root structures can no longer extract it?', 'Field Capacity', 'Saturation Point', 'Permanent Wilting Point', 'Hygroscopic Equilibrium Limit', 'C', '2026-05-17 17:26:45', 1),
+(24, 'agro', 'How does a sustained period of low relative humidity combined with high ambient winds impact regional crop systems?', 'It drops crop respiration levels to near zero.', 'It accelerates the Evapotranspiration (ET) rate, rapidly depleting available soil water reserves and causing thermal stress.', 'It increases soil nitrate retention parameters automatically.', 'It forces root structures to expand upward into the surface boundary layer.', 'B', '2026-05-17 17:26:45', 1),
+(25, 'agro', 'The distinct temperature range boundary below which a specific crop variety completely ceases metabolic and structural development is termed:', 'The Latent Ceiling Limit', 'The Base (or Threshold) Temperature', 'The Adiabatic Inversion Point', 'The Kinetic Saturation Index', 'B', '2026-05-17 17:26:45', 1),
+(26, 'agro', 'Which instrumentation sensor array is utilized to calculate and measure actual solar radiation intensity hitting crop canopies?', 'Anemometer', 'Pyranometer', 'Psychrometer', 'Barograph', 'B', '2026-05-17 17:26:45', 1),
+(27, 'agro', 'What field condition is indicated when an AgroMeteo sensor profile states that a soil bed has reached \'Field Capacity\'?', 'The soil is completely dry and has lost all moisture due to solar heat.', 'The soil is completely flooded with all pore spaces filled with water, limiting oxygen extraction.', 'The soil has drained excess water from large pores due to gravity, retaining the optimal amount of water for plant roots.', 'The crop canopy has reached maximum vegetative surface area closure.', 'C', '2026-05-17 17:26:45', 1),
+(28, 'agro', 'Which climatic hazard poses the greatest risk of mechanical cell wall destruction and frost damage to high-altitude crop developments?', 'Thermal Inversion layers bringing overnight radiant ground frost below 0 degrees Celsius', 'Excessive midday solar radiation levels', 'High relative humidity combined with low soil temperature metrics', 'Prolonged dry line shifting across coastal regions', 'A', '2026-05-17 17:26:45', 1),
+(29, 'agro', 'What agricultural outcome occurs during a period of severe \'Meteorological Drought\' that transitions into a \'Agricultural Drought\'?', 'Rainfall deficits lead to a direct, critical shortage of available soil moisture, impairing crop growth.', 'Reservoir volumes drop but soil moisture profiles remain entirely unaffected.', 'Groundwater levels rise causing root rot across perennial cash crop installations.', 'The base growing temperature of local cereals shifts downward by 5 degrees.', 'A', '2026-05-17 17:26:45', 1),
+(30, 'agro', 'How does a high Dew Point tracking profile during harvest seasons impact stored cereal grains stored in open-air warehouses?', 'It lowers grain moisture content, improving preservation profiles.', 'It increases the risk of moisture re-absorption, encouraging fungal growth, rot, and spoilage.', 'It eliminates insect population growth metrics inside structural silos.', 'It changes the structural protein matrix of harvested legumes.', 'B', '2026-05-17 17:26:45', 1),
+(31, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:42:57', 1),
+(32, 'aviation', 'What does the abbreviation \'SFC WND\' signify when issued within an official ICAO SIGMET advisory document?', 'Severe Forecast Cyclogenesis Winds altering local pressure zones.', 'Surface Wind criteria exceeding safety operational limitations over specified coordinates.', 'Stratus Frontal Convection Winds affecting upper flight levels.', 'Sub-polar Freezing Cold Wind shear alerts.', 'B', '2026-05-17 17:43:32', 1),
+(33, 'aviation', 'When an airfield report uses the operational abbreviation \'NOSIG\' in a TREND forecast, what explicit timeframe constraint applies?', 'No significant weather changes are expected for the next 24 hours.', 'No significant weather changes are expected during the 2 hours following the time of the observation.', 'The automated meteorological sensors are offline for scheduled maintenance.', 'The station is operating under visual flight rules (VFR) indefinitely.', 'B', '2026-05-17 17:43:32', 1),
+(34, 'aviation', 'According to WMO standard coding rules, what physical condition distinguishes a report of Mist (BR) from Fog (FG)?', 'Mist is reported when visibility is between 1,000 meters and 5,000 meters; Fog is reported when visibility drops below 1,000 meters.', 'Mist contains exclusively ice crystals, whereas Fog is entirely supercooled water liquid droplets.', 'Mist occurs only during cyclonic warm front advection cycles.', 'Fog requires an ambient air temperature below 0 degrees Celsius.', 'A', '2026-05-17 17:43:32', 1),
+(35, 'aviation', 'If a pilot reads \'RMK AO2\' in the remarks section of an automated METAR, what information is being conveyed about the station?', 'The station requires two certified human observers to validate the data.', 'The automated station is equipped with a precipitation-discriminator sensor array.', 'The airfield has two active runways operational under low-visibility procedures.', 'The report is a secondary amendment to an existing TAF cycle.', 'B', '2026-05-17 17:43:32', 1),
+(36, 'aviation', 'What specific hazard is communicated by the weather modifier \'+TSRASN\' in an active airport terminal broadcast?', 'Heavy thunderstorm accompanied by rain and snow at the station.', 'Tropical storm bringing localized radiation dust storms.', 'Thermal surface ridge causing unexpected wind shear vectors.', 'Torrential snow accumulation exceeding 5 centimeters per hour.', 'A', '2026-05-17 17:43:32', 1),
+(37, 'aviation', 'Under ICAO guidelines, a vertical visibility (VV) value is explicitly reported in a METAR under which structural condition?', 'When the sky is obscured and the local cloud base cannot be structurally determined by the ceilometer.', 'When high-altitude cirrus clouds exceed 30,000 feet absolute altitude.', 'When a convective microburst occurs directly over the runway midpoint.', 'When the horizontal visibility exceeds 10 kilometers under clear skies.', 'A', '2026-05-17 17:43:32', 1),
+(38, 'aviation', 'The prefix \'PROB30\' preceding a temporal forecast block (e.g., PROB30 TEMPO) indicates what percentage likelihood of occurrence?', 'Exactly 30% probability of the specified weather phenomena occurring during the time interval.', 'A 30% reduction in overall terminal ceiling visibility constraints.', 'The weather changes will impact exactly 30% of the regional terminal control area airspace.', 'The forecast has a confidence interval of less than 30% among senior analysts.', 'A', '2026-05-17 17:43:32', 1),
+(39, 'aviation', 'What atmospheric state change is denoted by the indicator \'NSC\' within an official aerodrome weather matrix?', 'No Significant Clouds are detected (none below 5,000 feet, no CB/TCU, and no CAVOK restrictions apply).', 'Northern Sector Convection cells are developing rapidly.', 'Nimbus Stratiformis Canopy is completely capping the terminal zone.', 'New Storm Center has localized within a 10 nautical mile radius.', 'A', '2026-05-17 17:43:32', 1),
+(40, 'aviation', 'Which standard code field is utilized to report volcanic ash tracking hazards across international airway routes?', 'VA', 'VOLC', 'ASH', 'VONA', 'A', '2026-05-17 17:43:32', 1),
+(41, 'general', 'What physical law dictates that the amount of thermal electromagnetic radiation emitted by a blackbody is proportional to the fourth power of its absolute temperature?', 'Stefan-Boltzmann Law', 'Wien\'s Displacement Law', 'Kirchhoff\'s Law of Radiation', 'The Hydrostatic Equation Matrix', 'A', '2026-05-17 17:43:32', 1),
+(42, 'general', 'The narrow, highly concentrated band of geostrophic winds meandering near the tropopause that drives global mid-latitude storm systems is called the:', 'Trade Wind Convergence Zone', 'Hadley Cell Boundary Link', 'Jet Stream', 'Katabatic Drainage Core', 'C', '2026-05-17 17:43:32', 1),
+(43, 'general', 'What type of cloud stability condition is indicated by a Environmental Lapse Rate (ELR) that is less than the Moist Adiabatic Lapse Rate (MALR)?', 'Absolute Instability', 'Conditional Instability', 'Absolute Stability', 'Convective Equilibrium State', 'C', '2026-05-17 17:43:32', 1),
+(44, 'general', 'Which atmospheric layer contains the vast majority of the Earth\'s total moisture mass and is the primary zone where weather events materialize?', 'Stratosphere', 'Troposphere', 'Mesosphere', 'Exosphere', 'B', '2026-05-17 17:43:32', 1),
+(45, 'general', 'The ratio of the mass of water vapor in a given air parcel to the total mass of dry air in that same parcel is known as the:', 'Relative Humidity Percentage', 'Absolute Density Matrix', 'Mixing Ratio', 'Vapor Pressure Equilibrium', 'C', '2026-05-17 17:43:32', 1),
+(46, 'general', 'What type of structural fog develops on clear, calm nights when the Earth\'s surface rapidly cools down via longwave thermal emission?', 'Advection Fog', 'Radiation Fog', 'Upslope Orographic Fog', 'Steam Evaporation Fog', 'B', '2026-05-17 17:43:32', 1),
+(47, 'general', 'What specific physical process releases latent heat energy directly into the surrounding environment, reinforcing thunderstorm updrafts?', 'Evaporation of water droplets', 'Condensation of water vapor into liquid water', 'Sublimation of ground ice sheets', 'Adiabatic expansion of dry air volumes', 'B', '2026-05-17 17:43:32', 1),
+(48, 'general', 'A localized, high-velocity wind vector that rushes downward from a severe convective storm cell and spreads out destructively at the surface is termed a:', 'Trough Line Shift', 'Microburst', 'Anabatic Thermal Current', 'Gradient Geostrophic Vector', 'B', '2026-05-17 17:43:32', 1),
+(49, 'general', 'Which meteorological index calculates the apparent temperature felt by the human body by combining ambient air temperature with relative humidity?', 'Wind Chill Index', 'Heat Index', 'Barometric Pressure Weight', 'Dew Point Saturation Vector', 'B', '2026-05-17 17:43:32', 1),
+(50, 'general', 'What occurs at the center of a strong, well-developed subtropical high-pressure cell (anticyclone)?', 'Widespread, slowly sinking air currents (subsidence) that suppress cloud formation.', 'Violent convective updrafts creating massive thunderstorm structures.', 'Rapid drop in surface air temperature approaching the freezing point.', 'Continuous low-level convergence feeding a steep thermal gradient.', 'A', '2026-05-17 17:43:32', 1),
+(51, 'agro', 'How does the occurrence of a high atmospheric Vapor Pressure Deficit (VPD) alter the physiological function of commercial field crops?', 'It decreases soil nutrient absorption without modifying transpiration parameters.', 'It forces stomatal closure to limit water loss, which restricts carbon dioxide intake and slows down overall photosynthesis.', 'It increases the overall rate of plant cell division exponentially.', 'It transitions the crop out of reproductive phases back into vegetative growth arrays.', 'B', '2026-05-17 17:43:32', 1),
+(52, 'agro', 'Which instrument array is structurally engineered to isolate a block of soil and plants to accurately measure actual evapotranspiration (ET) via precise mass tracking?', 'Anemometer', 'Barograph', 'Lysimeter', 'Pyranometer', 'C', '2026-05-17 17:43:32', 1),
+(53, 'agro', 'When calculating crop water requirements, what does the reference parameter \'ET0\' explicitly represent?', 'The Evapotranspiration rate of a standardized, well-watered reference grass crop surface.', 'The total volume of ground moisture lost exclusively to deep drainage channels.', 'The maximum structural evaporation capability of an open-water reservoir surface.', 'The minimum moisture required to prevent permanent plant wilting cascades.', 'A', '2026-05-17 17:43:32', 1),
+(54, 'agro', 'The destructive agro-meteorological hazard where ice crystals form inside plant cell walls during late spring cold fronts is known as:', 'Advection Scalding', 'Black Frost / Radiation Frost Damage', 'Latent Heat Scorching', 'Edaphic Desiccation Event', 'B', '2026-05-17 17:43:32', 1),
+(55, 'agro', 'What is the direct impact of high Albedo values across a newly cultivated field grid?', 'The soil retains more solar energy, accelerating seed germination cycles.', 'The soil reflects a high percentage of incoming solar radiation, remaining cooler than low-albedo soils.', 'The field experiences a rapid drop in local wind shear friction vectors.', 'The topsoil layers saturate with moisture at a faster rate.', 'B', '2026-05-17 17:43:32', 1),
+(56, 'agro', 'Which specific spectrum band of solar electromagnetic radiation is utilized by green crops during active photosynthesis?', 'Infrared Radiation (IR)', 'Photosynthetically Active Radiation (PAR, 400 to 700 nanometers)', 'Ultraviolet-C (UVC) Waves', 'Microwave Thermal Signatures', 'B', '2026-05-17 17:43:32', 1),
+(57, 'agro', 'What field outcome is anticipated when soil air spaces become fully saturated with water for an extended period (waterlogging)?', 'Root respiration is inhibited due to oxygen deprivation, leading to root decay and altered nutrient uptake.', 'The plant accelerates nitrogen conversion dynamics inside the leaf matrix.', 'Transpiration rates increase to compensate for the excess ground moisture volume.', 'The soil base temperature rises by several degrees Celsius.', 'A', '2026-05-17 17:43:32', 1),
+(58, 'agro', 'The operational ratio mapping the yield mass of a harvested crop against the total volume of water consumed over its life cycle is termed:', 'Water Use Efficiency (WUE)', 'Evapotranspiration Index Matrix', 'Hydrological Saturation Coefficient', 'Crop Performance Quotient', 'A', '2026-05-17 17:43:32', 1),
+(59, 'agro', 'How do extended overcast sky structures with low solar irradiance impact greenhouse vegetable configurations during the fruiting phase?', 'They shift the crop baseline temperature requirement upward by 10 degrees.', 'They reduce carbohydrate production via photosynthesis, potentially leading to flower drop and smaller fruit sizes.', 'They increase structural cell wall rigidity, preventing lodging issues.', 'They eliminate insect infestation risks due to cooling trends.', 'B', '2026-05-17 17:43:32', 1),
+(60, 'agro', 'Which edaphic parameter dictates how fast rainwater can enter a soil bed profile before generating surface runoff?', 'The Infiltration Rate', 'The Permanent Wilting Point Coefficient', 'The Capillary Fringe Limit', 'The Soil Organic Matter Index', 'A', '2026-05-17 17:43:32', 1),
+(61, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:44:54', 1),
+(62, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:45:12', 1),
+(63, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:45:32', 1),
+(64, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:46:20', 1),
+(65, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:49:27', 1),
+(66, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:51:40', 1),
+(67, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:52:08', 1),
+(68, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:53:03', 1),
+(69, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:53:34', 1),
+(70, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:54:12', 1),
+(71, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:55:06', 1),
+(72, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:57:58', 1),
+(73, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 17:58:34', 1),
+(74, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 18:05:06', 1),
+(75, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 18:08:23', 1),
+(76, 'aviation', 'Which METAR code identifier indicates that a runway is completely or partially covered in dry snow?', 'R04/829294', 'R04/295594', 'R04/790150', 'R04/SNOWBRK', 'B', '2026-05-17 18:08:42', 1);
+COMMIT;
