@@ -1,5 +1,13 @@
 <?php
-session_start();
+//session_start();
+// Increase active session storage on the server architecture to 30 days
+ini_set('session.gc_maxlifetime', 2592000); 
+ini_set('session.cookie_lifetime', 2592000);
+
+// Safe fallback start context
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 /**
  * IntelliMeteo Configuration Loader
  * Handles environment variables for security.
