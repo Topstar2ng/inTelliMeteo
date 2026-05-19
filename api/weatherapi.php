@@ -49,3 +49,38 @@ function getWeatherForecast($city = "Kano") {
 
     return json_decode($response, true);
 }
+
+/**
+ * Fetch 5-Day / 3-Hour Forecast
+ */
+function getWeatherDataForecast($city = "Kano") {
+    $apiKey = WEATHER_API_KEY;
+    
+    if (empty($apiKey)) {
+        return ['error' => 'API Key missing'];
+    }
+
+    // Clean the input to prevent basic injection or errors
+    $city = urlencode(trim($city));
+    
+    // OpenWeather 5-Day / 3-Hour Forecast endpoint targeted specifically to Nigeria (,NG)
+    $url = "https://api.openweathermap.org/data/2.5/forecast?q={$city},NG&units=metric&appid={$apiKey}";
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Maintained to match your getWeatherData environment configuration
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    $data = json_decode($response, true);
+
+    // If city is not found or API throws an error, catch it gracefully
+    if ($httpCode !== 200) {
+        return ['error' => "Forecast data for '" . urldecode($city) . "' not found in Nigeria."];
+    }
+
+    return $data;
+}

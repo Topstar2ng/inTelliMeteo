@@ -27,6 +27,13 @@
         });
     };
     <?php endif; ?>
+
+    //update page every 15 minutes to fetch new data if user is signed in
+    setInterval(function() {
+        if(<?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>) {
+            location.reload();
+        }
+    }, 900000); // 900,000 milliseconds = 15 minutes
 </script>
 <script>
     // custome JS for preloader

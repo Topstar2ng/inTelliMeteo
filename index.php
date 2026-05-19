@@ -1,10 +1,10 @@
-<?php
+<?php 
 require_once 'api/weatherapi.php';
 
-// 1. Prioritize Search, then Session, then Default to kano
+// 1. Session & Location Management
 if (isset($_GET['city'])) {
     $currentCity = $_GET['city'];
-    $_SESSION['last_city'] = $currentCity; // Save to session
+    $_SESSION['last_city'] = $currentCity;
 } elseif (isset($_SESSION['last_city'])) {
     $currentCity = $_SESSION['last_city'];
 } else {
@@ -13,13 +13,17 @@ if (isset($_GET['city'])) {
 
 $weather = getWeatherData($currentCity);
 
-// If there's an error (like city not found), fall back to Lagos but keep the error message
+// Fetch forecast payload for operational timeline insights (3H and 24H chunks)
+// Adjust function name to match your exact backend client declaration
+$forecastData = getWeatherDataForecast($currentCity) ?? []; 
+
 if (isset($weather['error'])) {
     $errorMessage = $weather['error'];
-    $weather = getWeatherData("Kano"); // Fallback data
+    $weather = getWeatherData("Kano");
+    $forecastData = getWeatherDataForecast("Kano") ?? [];
 }
 
-// Define local background based on weather condition
+// 2. Enhanced Weather Condition Asset Selection
 $weatherMain = strtolower($weather['weather'][0]['main']); 
 $weatherDescription = strtolower($weather['weather'][0]['description']); 
 $bgPath = "";
@@ -40,7 +44,7 @@ switch ($weatherMain) {
                 $bgPath = "assets/images/weather/cloud-bkn.jpg";
                 break;
             default:
-                $bgPath = "assets/images/weather/clear.jpg";
+                $bgPath = "assets/images/weather/clouds.jpg"; // Better contextual fallback
                 break;
         }
         break;
@@ -65,18 +69,29 @@ switch ($weatherMain) {
         break;
 }
 
-// Wrap it in the gradient for readability
-$bgStyle = "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('$bgPath')";
+$bgStyle = "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url('$bgPath')";
 
+// 3. Extracting Outlook Points for the Duty Forecaster
+$outlook3H = null;
+$outlook24H = null;
+
+if (!empty($forecastData['list'])) {
+    // Index 0 or 1 usually represents the next 3-hour timeline window
+    $outlook3H = $forecastData['list'][0] ?? null;
+    // Index 8 represents roughly 24 hours into the future (8 intervals * 3 hours = 24H)
+    $outlook24H = $forecastData['list'][8] ?? null;
+}
 ?>
 
-
 <?php include 'includes/header.php'; ?>
-
-
+<style>
+    .text-muted {
+        font-size: 0.9rem;
+        color: rgba(63, 177, 28, 0.75) !important;
+    }
+</style>
 <div class="container mt-4">
     
-    <!-- Error Alert -->
     <?php if (isset($errorMessage)): ?>
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
             <strong>Notice:</strong> <?php echo $errorMessage; ?> Showing Kano instead.
@@ -84,56 +99,191 @@ $bgStyle = "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('$bgPath')";
         </div>
     <?php endif; ?>
 
-    
-    <!-- Main Display -->
-    <div class="row mb-5">
+    <div class="row mb-4">
         <div class="col-md-12">
-            <div class="card hero-card shadow-lg p-5" 
-     style="background: <?php echo $bgStyle; ?>; background-size: cover; background-position: center; transition: background 0.5s ease;">
+            <div class="card hero-card shadow-lg p-5" style="background: <?php echo $bgStyle; ?>; background-size: cover; background-position: center; transition: background 0.5s ease; border: 1px solid rgba(255,255,255,0.1);">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <h1 class="display-4 fw-bold"><?php echo $weather['name']; ?>, <?php echo $weather['sys']['country']; ?></h1>
-                        <p class="lead text-capitalize">
+                        <span class="badge bg-info mb-2">Station Observation Block</span>
+                        <h1 class="display-4 fw-bold text-white"><?php echo $weather['name']; ?>, <?php echo $weather['sys']['country']; ?></h1>
+                        <p class="lead text-capitalize text-light d-flex align-items-center gap-2">
                             <?php 
-                            $weatherDescription = $weather['weather'][0]['description'];
-                            if(strtolower($weatherDescription) == 'overcast clouds'){
-                                $weatherDescription = "Medium Clouds";
-                            }
-                            echo $weatherDescription;
-                            ?>
-                        <?php
-                            //include weather icon
+                            $weatherDescriptionClean = $weather['weather'][0]['description'];
+                            if(strtolower($weatherDescriptionClean) == 'overcast clouds') { $weatherDescriptionClean = "Medium Clouds"; }
+                            echo $weatherDescriptionClean;
+                            
                             $iconCode = $weather['weather'][0]['icon'];
                             $iconUrl = "https://openweathermap.org/img/wn/" . $iconCode . "@2x.png";
-                        ?>
-                        <img src="<?php echo $iconUrl; ?>" alt="Weather Icon" class="img-fluid mb-2">
+                            ?>
+                            <img src="<?php echo $iconUrl; ?>" alt="Weather Icon" style="width: 45px; height: 45px;">
                         </p>
-                        <hr class="bg-white">
-                        <div class="d-flex gap-4">
+                        <hr class="bg-white opacity-25">
+                        <div class="d-flex gap-4 text-white">
                             <div>
-                                <small class="d-block text-light"><i class="bi bi-droplet"></i> Humidity</small>
+                                <small class="d-block text-muted"><i class="bi bi-droplet"></i> Humidity</small>
                                 <strong><?php echo $weather['main']['humidity']; ?>%</strong>
                             </div>
                             <div>
-                                <small class="d-block text-light"><i class="bi bi-wind"></i> Wind Speed</small>
-                                <strong><?php echo $weather['wind']['speed']; ?> m/s</strong>
+                                <small class="d-block text-muted"><i class="bi bi-wind"></i> Wind</small>
+                                <strong>
+                                    <?php 
+                                    $mainWindMs = $weather['wind']['speed'];;
+                                    $mainWindKt = round($mainWindMs * 1.94384);
+                                    ?>
+                                    <?php echo $mainWindKt; ?> KT (<?php echo round($mainWindMs); ?> m/s)
+                                </strong>
                             </div>
                             <div>
-                                <small class="d-block text-light"><i class="bi bi-map"></i> Location</small>
-                                <strong><?php echo $weather['coord']['lat']; ?>, <?php echo $weather['coord']['lon']; ?></strong>
+                                <small class="d-block text-muted"><i class="bi bi-eye"></i> Visibility</small>
+                                <strong><?php echo isset($weather['visibility']) ? ($weather['visibility'] / 1000) . " km" : "N/A"; ?></strong>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 text-md-end text-center">
-                        <h1 class="display-1 fw-bold"><i class="bi bi-thermometer-sun"></i> <?php echo round($weather['main']['temp']); ?>°C</h1>
-                        <p>Feels like <?php echo round($weather['main']['feels_like']); ?>°C</p>
+                    <div class="col-md-6 text-md-end text-center text-white">
+                        <h1 class="display-1 fw-bold"><i class="bi bi-thermometer-sun text-warning"></i> <?php echo round($weather['main']['temp']); ?>°C</h1>
+                        <p class="text-light opacity-75">Feels like <?php echo round($weather['main']['feels_like']); ?>°C</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Features Section (Placeholders) -->
+    <div class="row mb-5 g-4">
+        <div class="col-md-6">
+            <div class="card h-100 bg-dark text-white border-secondary shadow-sm">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 text-info"><i class="bi bi-clock-history me-2"></i> 3-Hour Landing Trend Outlook</h5>
+                    <small class="badge bg-secondary">METAR Trend Check</small>
+                </div>
+                <div class="card-body">
+                    <?php if ($outlook3H): ?>
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <span class="text-muted d-block small">Expected Temp</span>
+                                <h3 class="mb-0"><?php echo round($outlook3H['main']['temp']); ?>°C</h3>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span class="text-muted d-block small">Condition</span>
+                                <strong class="text-capitalize text-warning"><?php echo $outlook3H['weather'][0]['description']; ?></strong>
+                            </div>
+                        </div>
+                        <hr class="border-secondary my-3">
+                        <div class="row text-center small">
+                            <div class="col-4 border-end border-secondary">
+                                <span class="text-muted d-block">Wind Speed</span>
+                                <?php 
+                                    $windMs = $outlook3H['wind']['speed'];
+                                    $windKt = round($windMs * 1.94384);
+                                ?>
+                                <strong><?php echo $windKt; ?> KT (<?php echo round($windMs); ?> m/s)</strong>
+                            </div>
+                            <div class="col-4 border-end border-secondary">
+                                <!--<span class="text-muted d-block">Humidity</span>-->
+                                <!--<strong><?php //echo $outlook3H['main']['humidity']; ?>%</strong>-->
+                                <span class="text-muted d-block" title="significant weather outlook">Outlook</span>
+                                <strong>
+                                    <?php
+                                    /* For the 3H outlook, check the first interval (3 hours) for any significant weather conditions that could impact operations. */
+
+                                    $foundSignificant3H = false;
+                                    $watchOut3H = ['Thunderstorm', 'Rain', 'Drizzle', 'Snow', 'Fog', 'Mist', 'Haze', 'Dust', 'Sand', 'Squall'];
+
+                                    // Check only the first interval (next 3 hours)
+                                    for ($i = 0; $i < 1; $i++) {
+                                        if (isset($forecastData['list'][$i])) {
+                                            $condition = $forecastData['list'][$i]['weather'][0]['main'];
+                                            if (in_array($condition, $watchOut3H)) {
+                                                $time = date("H:i", $forecastData['list'][$i]['dt']);
+                                                $desc = ucwords($forecastData['list'][$i]['weather'][0]['description']);
+                                                echo "<span title='Expected around " . $time . " GMT'>$desc</span>";
+                                                $foundSignificant3H = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (!$foundSignificant3H) echo "Nil";
+                                    ?>
+                                </strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="text-muted d-block">Prob. Rain</span>
+                                <strong><?php echo isset($outlook3H['pop']) ? ($outlook3H['pop'] * 100) . "%" : "0%"; ?></strong>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-muted text-center my-4">Timeline data temporarily missing or API limit reached.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 bg-dark text-white border-secondary shadow-sm">
+                <div class="card-header border-secondary d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0 text-success"><i class="bi bi-calendar-range me-2"></i> 24-Hour Synoptic Outlook</h5>
+                    <small class="badge bg-secondary">TAF Window Check</small>
+                </div>
+                <div class="card-body">
+                    <?php if ($outlook24H): ?>
+                        <div class="row align-items-center">
+                            <div class="col-6">
+                                <span class="text-muted d-block small">Target Horizon Temp</span>
+                                <h3 class="mb-0"><?php echo round($outlook24H['main']['temp']); ?>°C</h3>
+                            </div>
+                            <div class="col-6 text-end">
+                                <span class="text-muted d-block small">Expected Category</span>
+                                <strong class="text-capitalize text-info"><?php echo $outlook24H['weather'][0]['main']; ?></strong>
+                            </div>
+                        </div>
+                        <hr class="border-secondary my-3">
+                        <div class="row text-center small">
+                            <div class="col-4 border-end border-secondary">
+                                <span class="text-muted d-block">Outlook</span>
+                                <strong>
+                                    <?php
+                                    /* For the 24H outlook, check the first 8 intervals (24 hours) for any significant weather conditions that could impact operations. Prioritize showing the most impactful condition if multiple are present.*/
+
+                                    $foundSignificant = false;
+                                    $watchOut = ['Thunderstorm', 'Rain', 'Drizzle', 'Snow', 'Fog', 'Mist', 'Haze', 'Dust', 'Sand', 'Squall'];
+
+                                    // Check the first 8 intervals (approx 24 hours)
+                                    for ($i = 0; $i < 8; $i++) {
+                                        if (isset($forecastData['list'][$i])) {
+                                            $condition = $forecastData['list'][$i]['weather'][0]['main'];
+                                            if (in_array($condition, $watchOut)) {
+                                                $time = date("H:i", $forecastData['list'][$i]['dt']);
+                                                $desc = ucwords($forecastData['list'][$i]['weather'][0]['description']);
+                                                echo "<span title='Expected around " . $time . " GMT'>$desc</span>";
+                                                $foundSignificant = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (!$foundSignificant) echo "Nil";
+                                    ?>
+                                </strong>
+                            </div>
+                            <div class="col-4 border-end border-secondary">
+                                <span class="text-muted d-block">Wind Gusts</span>
+                                <?php 
+                                    $gustMs = $outlook24H['wind']['gust'] ?? $outlook24H['wind']['speed'];
+                                    $gustKt = round($gustMs * 1.94384);
+                                ?>
+                                <strong><?php echo $gustKt; ?> KT (<?php echo round($gustMs); ?> m/s)</strong>
+                            </div>
+                            <div class="col-4">
+                                <span class="text-muted d-block">Cloud Cover</span>
+                                <strong><?php echo $outlook24H['clouds']['all']; ?>%</strong>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-muted text-center my-4">Timeline data temporarily missing or API limit reached.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row text-center g-4">
         <div class="col-md-4">
             <div class="card border-0 shadow-sm p-4 h-100">
@@ -150,17 +300,15 @@ $bgStyle = "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('$bgPath')";
                 <div class="mb-2"><i class="bi bi-airplane text-warning fs-1"></i></div>
                 <h4>AeroMeteo</h4>
                 <p class="text-muted">Aviation reports for local airports.</p>
-                <!-- Change the button link to include the current city -->
-                    <?php if(isset($_SESSION['user_id'])): ?>
-                        <a href="modules/aerometeo/index.php?city=<?php echo urlencode($currentCity); ?>" 
-                            class="btn btn-outline-warning btn-sm mt-auto">
-                            <i class="bi bi-airplane me-1"></i> Open Tools
-                        </a>
-                    <?php else: ?>
-                        <a href="login.php" class="btn btn-outline-secondary btn-sm mt-auto">
-                            <i class="bi bi-airplane me-1"></i> Login to Access
-                        </a>
-                    <?php endif; ?>
+                <?php if(isset($_SESSION['user_id'])): ?>
+                    <a href="modules/aerometeo/index.php?city=<?php echo urlencode($currentCity); ?>" class="btn btn-outline-warning btn-sm mt-auto">
+                        <i class="bi bi-airplane me-1"></i> Open Tools
+                    </a>
+                <?php else: ?>
+                    <a href="login.php" class="btn btn-outline-secondary btn-sm mt-auto">
+                        <i class="bi bi-airplane me-1"></i> Login to Access
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
         <div class="col-md-4">
@@ -169,8 +317,7 @@ $bgStyle = "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('$bgPath')";
                 <h4>AgroMeteo</h4>
                 <p class="text-muted">Farming insights for this region.</p>
                 <?php if(isset($_SESSION['user_id'])): ?>
-                    <a href="modules/agrometeo/index.php?city=<?php echo urlencode($currentCity); ?>" 
-                        class="btn btn-outline-success btn-sm mt-auto">
+                    <a href="modules/agrometeo/index.php?city=<?php echo urlencode($currentCity); ?>" class="btn btn-outline-success btn-sm mt-auto">
                         <i class="bi bi-tree-fill me-1"></i> Get Advice
                     </a>
                 <?php else: ?>
@@ -219,7 +366,7 @@ $bgStyle = "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('$bgPath')";
             <div class="card border-0 shadow-sm p-4 h-100">
                 <div class="mb-2"><i class="bi bi-cloud-download text-warning fs-1"></i></div>
                 <h4>Forecast & Warnings</h4>
-                <p class="text-muted">Stay informed about upcoming weather conditions and potential hazards.</p>
+                <p class="text-muted">Stay informed about upcoming weather conditions and hazards.</p>
                 <?php if(isset($_SESSION['user_id'])): ?>
                     <a href="modules/forecasts/" class="btn btn-outline-warning btn-sm mt-auto">
                         <i class="bi bi-cloud-download me-1"></i> View Forecasts
