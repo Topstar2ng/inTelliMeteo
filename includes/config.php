@@ -38,3 +38,5 @@ define('DB_NAME', $_ENV['DB_NAME'] ?? '');
 define('DB_USER', $_ENV['DB_USER'] ?? '');
 define('DB_PASS', $_ENV['DB_PASS'] ?? '');
 define('WEATHER_API_KEY', $_ENV['OPENWEATHER_API_KEY'] ?? '');
+define('PAYSTACK_PUBLIC_KEY', $_ENV['PAYSTACK_PUBLIC_KEY'] ?? '');
+define('PAYSTACK_SECRET_KEY', $_ENV['PAYSTACK_SECRET_KEY'] ?? '');

@@ -58,7 +58,7 @@
                 </a>
 
                 <!-- Settings Icon -->
-                <a href="<?php echo BASE_URL; ?>modules/settings/index.php" class="text-white fs-5 lh-1 p-1 hover-rotate" title="Settings">
+                <a href="<?php echo BASE_URL; ?>modules/settings/" class="text-white fs-5 lh-1 p-1 hover-rotate" title="Settings">
                     <i class="bi bi-gear-fill"></i>
                 </a>
             <?php else: ?>

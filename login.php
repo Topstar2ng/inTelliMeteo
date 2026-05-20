@@ -16,6 +16,7 @@ if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_me'])) {
 
     if ($user) {
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_email'] = $user['email'];
         $_SESSION['full_name'] = $user['full_name'];
         $_SESSION['role'] = $user['role'];
         
@@ -59,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['full_name'] = $user['full_name'];
         $_SESSION['role'] = $user['role'];
+        $_SESSION['user_email'] = $user['email'];
         
         header("Location: index.php");
         exit();

@@ -137,6 +137,10 @@ if (!empty($forecastData['list'])) {
                                 <small class="d-block text-muted"><i class="bi bi-eye"></i> Visibility</small>
                                 <strong><?php echo isset($weather['visibility']) ? ($weather['visibility'] / 1000) . " km" : "N/A"; ?></strong>
                             </div>
+                            <div>
+                                <small class="d-block text-light"><i class="bi bi-map"></i> Location</small>
+                                <strong><?php echo $weather['coord']['lat']; ?>, <?php echo $weather['coord']['lon']; ?></strong>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6 text-md-end text-center text-white">
@@ -336,7 +340,7 @@ if (!empty($forecastData['list'])) {
                 <h4>Competency Test</h4>
                 <p class="text-muted">Test your knowledge with our interactive assessment.</p>
                 <?php if(isset($_SESSION['user_id'])): ?>
-                    <a href="modules/assessment/index.php" class="btn btn-outline-info btn-sm mt-auto">
+                    <a href="modules/assessment/" class="btn btn-outline-info btn-sm mt-auto">
                         <i class="bi bi-mortarboard me-1"></i> Take Test
                     </a>
                 <?php else: ?>

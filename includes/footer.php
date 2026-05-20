@@ -1,14 +1,32 @@
 <div class="footer bg-dark text-light mt-4" style="position: sticky; bottom: 0;">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center py-3">
-            <div class="small mb-0">&copy; <?php echo date("Y"); ?> IntelliMeteo. <span class="d-none d-md-inline">All rights reserved.</span></div>
+    <div class="d-flex justify-content-between align-items-center py-3">
+        <div class="small mb-0">&copy; <span class="d-none d-md-inline"><?php echo date("Y"); ?></span> IntelliMeteo. <span class="d-none d-md-inline">All rights reserved.</span>
+        </div>
+        
+        <div>
             <?php if(isset($_SESSION['user_id'])): ?>
                 <!-- LOGGED IN VIEW -->
                 <span class="text-success small me-3"><i class="bi bi-person-check"></i> Hi, <?php echo htmlspecialchars(explode(' ', $_SESSION['full_name'])[1]); ?>!</span>
                 <a href="logout.php" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">Logout</span></a>
             <?php endif; ?>
-            <span class="text-end"><a href="<?php echo file_exists("modules/help/manual.html") ? "modules/help/manual.html" : "../modules/help/manual.html"; ?>" class="text-warning"><i class="bi bi-journal-richtext"></i> Manual</a></span>
         </div>
+        <div class="text-end py-3">           
+            
+            
+                <a href="<?php echo BASE_URL; ?>modules/help/manual.html" class="btn btn-primary btn-sm ms-2 d-inline-flex align-items-center" title="Manual">
+                    <i class="bi bi-journal-richtext"></i> 
+                    <span class="d-none d-md-inline ms-1">Manual</span>
+                </a>
+            
+            <!-- Support Button: Icon on mobile, Text on desktop -->
+            <a href="<?php echo BASE_URL; ?>supportme/" class="btn btn-warning btn-sm ms-2 d-inline-flex align-items-center" title="Support Me">
+                <i class="bi bi-cup-hot-fill"></i>
+                <span class="d-none d-md-inline ms-1">Support Me</span>
+            </a>
+            
+        </div>
+    </div>
     </div>
 </div>
 
