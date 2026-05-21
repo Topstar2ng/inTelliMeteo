@@ -142,6 +142,11 @@ if (!empty($userEmail)) {
                     <div class="small text-muted">
                         <strong>Infrastructure Note:</strong> This gesture is completely voluntary. IntelliMeteoFunds go directly toward covering active database instance hosting and raw JSON forecast requests. Payments are processed natively via Paystack over a secure PCI-DSS channel.
                     </div>
+                    <div class="fs-4 text-info px-2 ms-auto">
+                        <a href="https://portfolio.tecspectratechnologies.com/#contact" target="_blank" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-info-circle"></i> Contact the Developer
+                        </a>
+                    </div>
                 </div>
             </div>
 
