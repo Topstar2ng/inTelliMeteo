@@ -11,20 +11,22 @@
                 <a href="logout.php" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right"></i> <span class="d-none d-md-inline">Logout</span></a>
             <?php endif; ?>
         </div>
-        <div class="text-end py-3">           
-            
+        <div class="text-end py-3 btn-group">
             
                 <a href="<?php echo BASE_URL; ?>modules/help/manual.html" class="btn btn-primary btn-sm ms-2 d-inline-flex align-items-center" title="Manual">
                     <i class="bi bi-journal-richtext"></i> 
                     <span class="d-none d-md-inline ms-1">Manual</span>
-                </a>
-            
+                </a>            
             <!-- Support Button: Icon on mobile, Text on desktop -->
             <a href="<?php echo BASE_URL; ?>supportme/" class="btn btn-warning btn-sm ms-2 d-inline-flex align-items-center" title="Support Me">
                 <i class="bi bi-cup-hot-fill"></i>
                 <span class="d-none d-md-inline ms-1">Support Me</span>
             </a>
-            
+            <!-- contact me button -->
+            <a href="https://portfolio.tecspectratechnologies.com/" target="_blank" class="btn btn-info btn-sm ms-2 d-inline-flex align-items-center" title="Contact Me">
+                <i class="bi bi-envelope"></i>
+                <span class="d-none d-md-inline ms-1">Contact Me</span>
+            </a>
         </div>
     </div>
     </div>
